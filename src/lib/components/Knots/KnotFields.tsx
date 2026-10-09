@@ -1,6 +1,7 @@
 import { useState, type RefObject } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { STARTER_BLUEPRINTS } from "../../ai/models";
 
 export type KnotKind = "solo" | "tied" | "squad";
 
@@ -51,6 +52,18 @@ export function KnotFields({
         <option value="tied">Tied, 1-on-1</option>
         <option value="squad">Squad, up to 5</option>
       </select>
+      <div className="flex flex-wrap gap-2">
+        {STARTER_BLUEPRINTS.map((b) => (
+          <button
+            key={b.id}
+            type="button"
+            onClick={() => setTitle(b.title)}
+            className="rounded-full border border-neutral-800 px-3 py-1 text-xs text-neutral-400"
+          >
+            {b.title}
+          </button>
+        ))}
+      </div>
       {cap > 0 && (
         <>
           <input
