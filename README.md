@@ -18,9 +18,15 @@ Vite + React + Tailwind + Convex starter on Bun.
 
 - `convex/` — backend: `schema.ts`, `tasks.ts`, `auth.config.ts`
   (`_generated/` is produced by `convex dev`, committed)
-- `src/` — `main.tsx` (entry), `Backend.tsx` (Convex/Clerk providers),
-  `App.tsx`, `store.ts`, `lib/` (`queryClient.ts`, `validators.ts`),
-  `index.css` (Tailwind, true-black dark base)
+- `src/` — `main.tsx` (entry), `App.tsx` (tasks route), `router.tsx`
+  (MobileScreen layout, `/signin`, catch-all), `store.ts`,
+  `lib/components/` (feature folders: `Tasks/`, `TopBar/`, `BottomNav/`,
+  `SideDrawer/`, `Composer/`),
+  `lib/layouts/` (`Backend.tsx`, Convex/Clerk providers, `MobileScreen/`
+  phone-width frame), `lib/pages/` (`SignInPage.tsx`, lazy-loaded),
+  `lib/utils/` (`queryClient.ts`, `validators.ts`),
+  `lib/assets/` (images), `styles/` (`main.css` Tailwind entry,
+  `tokens.css` true-black dark base)
 - `public/` — static assets
 
 ## Envs
