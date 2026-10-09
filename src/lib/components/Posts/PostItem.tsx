@@ -6,32 +6,6 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 import { PostImages } from "./PostImages";
 import { timeAgo } from "../../utils/time";
 
-function HeartIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill={filled ? "currentColor" : "none"}
-      stroke="currentColor"
-      strokeWidth="1.5"
-    >
-      <path
-        d="M10 16.5C5.5 13.5 3 10.8 3 7.8 3 5.6 4.7 4 6.8 4c1.2 0 2.4.7 3.2 1.8C10.8 4.7 12 4 13.2 4 15.3 4 17 5.6 17 7.8c0 3-2.5 5.7-7 8.7z"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function CommentIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path d="M10 3.5c-3.9 0-7 2.6-7 5.8 0 1.9 1.1 3.5 2.8 4.5l-.8 2.7 3-1.6c.6.2 1.3.2 2 .2 3.9 0 7-2.6 7-5.8S13.9 3.5 10 3.5z" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 export function PostItem({
   id,
   author,
@@ -90,7 +64,7 @@ export function PostItem({
         )}
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <p className="text-sm">
+            <p className="text-base leading-tight">
               <Link to={`/user/${author}`} className="text-white">
                 {authorDisplay}
               </Link>{" "}
@@ -99,16 +73,21 @@ export function PostItem({
             {canEdit && (
               <Link
                 to={`/post/${id}/edit`}
-                className="shrink-0 text-xs text-neutral-500 underline"
+                aria-label="Edit"
+                className="group shrink-0"
               >
-                Edit
+                <img
+                  src="/MajesticonsDotsHorizontal.svg"
+                  alt=""
+                  className="h-5 w-5 invert opacity-40 group-hover:opacity-100"
+                />
               </Link>
             )}
           </div>
-          <p className="text-xs text-neutral-500">
+          <p className="text-sm text-neutral-500">
             in <span className="text-neutral-300">{knot}</span>
           </p>
-          <Link to={`/post/${id}`} className="mt-1 block text-sm text-neutral-200">
+          <Link to={`/post/${id}`} className="mt-1 block text-base leading-snug text-white">
             {text}
           </Link>
         </div>
@@ -118,17 +97,35 @@ export function PostItem({
         <button
           onClick={() => toggleLike({ postId: id as Id<"posts"> })}
           aria-label="Like"
-          className={`flex items-center gap-1.5 ${likedByMe ? "text-white" : "hover:text-white"}`}
+          className={`group flex items-center gap-1.5 ${likedByMe ? "text-white" : "hover:text-white"}`}
         >
-          <HeartIcon filled={likedByMe} />
+          <img
+            src="/MynauiHeart.svg"
+            alt=""
+            className={`h-5 w-5 invert ${likedByMe ? "hidden" : "opacity-40 group-hover:hidden"}`}
+          />
+          <img
+            src="/MynauiHeartSolid.svg"
+            alt=""
+            className={`h-5 w-5 invert ${likedByMe ? "" : "hidden group-hover:block"}`}
+          />
           {likeCount > 0 && <span className="text-xs">{likeCount}</span>}
         </button>
         <Link
           to={`/post/${id}`}
           aria-label="Comments"
-          className="flex items-center gap-1.5 hover:text-white"
+          className="group flex items-center gap-1.5 hover:text-white"
         >
-          <CommentIcon />
+          <img
+            src="/MynauiChat.svg"
+            alt=""
+            className="h-5 w-5 invert opacity-40 group-hover:hidden"
+          />
+          <img
+            src="/MynauiChatSolid.svg"
+            alt=""
+            className="hidden h-5 w-5 invert group-hover:block"
+          />
           {commentCount > 0 && (
             <span className="text-xs">{commentCount}</span>
           )}
@@ -136,9 +133,17 @@ export function PostItem({
         <button
           onClick={share}
           aria-label="Share"
-          className="ml-auto text-xs text-neutral-500 hover:text-white"
+          className="group text-xs text-neutral-500 hover:text-white"
         >
-          {copied ? "Copied" : "Share"}
+          {copied ? (
+            "Copied"
+          ) : (
+            <img
+              src="/MynauiPaperclipSolid.svg"
+              alt=""
+              className="h-5 w-5 invert opacity-40 group-hover:opacity-100"
+            />
+          )}
         </button>
       </div>
     </li>
