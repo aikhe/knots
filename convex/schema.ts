@@ -14,6 +14,7 @@ export default defineSchema({
   knots: defineTable({
     title: v.string(),
     creatorId: v.string(),
+    background: v.optional(v.string()),
     inviteToken: v.optional(v.string()),
     kind: v.union(
       v.literal("solo"),

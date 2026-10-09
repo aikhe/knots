@@ -25,6 +25,7 @@ export const create = mutation({
     title: v.string(),
     kind: v.union(v.literal("solo"), v.literal("tied"), v.literal("squad")),
     joinable: v.boolean(),
+    background: v.optional(v.string()),
     memberUserIds: v.array(v.string()),
   },
   handler: async (ctx, args) => {
@@ -46,6 +47,7 @@ export const create = mutation({
       creatorId: userId,
       kind: args.kind,
       joinable: args.kind !== "solo" && args.joinable,
+      background: args.background?.trim() || undefined,
       inviteToken: [...crypto.getRandomValues(new Uint8Array(16))]
         .map((b) => b.toString(16).padStart(2, "0"))
         .join(""),
@@ -91,6 +93,7 @@ export const mine = query({
         creatorId: knot.creatorId,
         kind: knot.kind,
         joinable: knot.joinable,
+        background: knot.background ?? null,
         memberCount: members.length,
         rope: ropeState(score),
         lastText: last?.text ?? null,
@@ -132,6 +135,7 @@ export const browse = query({
         title: knot.title,
         creatorId: knot.creatorId,
         kind: knot.kind,
+        background: knot.background ?? null,
         memberCount: members.length,
         rope: ropeState(score),
         lastText: last?.text ?? null,
