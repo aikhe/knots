@@ -50,7 +50,7 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search tasks"
+            placeholder="Search"
             autoFocus
             className="w-full rounded border border-neutral-800 bg-neutral-950 px-2 py-1 text-sm text-white"
           />

@@ -1,51 +1,73 @@
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import { Link } from "react-router";
-import { TaskList } from "../components/Tasks/Tasks";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+import { useUIStore } from "../../store";
+import { PostItem } from "../components/Posts/PostItem";
 
 const convexConfigured = Boolean(import.meta.env.VITE_CONVEX_URL);
 const clerkConfigured = Boolean(
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
 );
 
-function AuthHeader() {
-  if (!clerkConfigured) {
-    return (
-      <p className="mt-2 text-sm text-neutral-500">
-        Auth off. Add VITE_CLERK_PUBLISHABLE_KEY to sign in.
-      </p>
-    );
-  }
-  return (
-    <div className="mt-2">
-      <SignedOut>
-        <Link to="/signin" className="mt-2 inline-block text-sm text-white underline">
-          Sign in
-        </Link>
-      </SignedOut>
-    </div>
-  );
-}
-
 function Feed() {
-  if (!clerkConfigured) return <TaskList />;
+  const feed = useQuery(api.posts.feed);
+  const searchQuery = useUIStore((s) => s.searchQuery);
+
+  if (feed === undefined) {
+    return <p className="mt-6 text-sm text-neutral-500">Loading...</p>;
+  }
+
+  const q = searchQuery.trim().toLowerCase();
+  const visible = q
+    ? feed.filter(
+        (p) =>
+          p.text.toLowerCase().includes(q) ||
+          p.knot.toLowerCase().includes(q),
+      )
+    : feed;
+
+  if (visible.length === 0) {
+    return <p className="mt-6 text-sm text-neutral-500">Nothing here yet.</p>;
+  }
+
   return (
-    <>
-      <SignedOut>
-        <p className="mt-6 text-sm text-neutral-500">
-          Sign in to see your feed.
-        </p>
-      </SignedOut>
-      <SignedIn>
-        <TaskList />
-      </SignedIn>
-    </>
+    <ul className="mt-2">
+      {visible.map((p) => (
+        <PostItem
+          key={p._id}
+          id={p._id}
+          author={p.author}
+          avatarUrl={p.authorAvatar}
+          knot={p.knot}
+          text={p.text}
+          time={p._creationTime}
+          likeCount={p.likeCount}
+          likedByMe={p.likedByMe}
+        />
+      ))}
+    </ul>
   );
 }
 
 export function HomePage() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-6">
-      <AuthHeader />
+      {!clerkConfigured && (
+        <p className="mt-2 text-sm text-neutral-500">
+          Auth off. Add VITE_CLERK_PUBLISHABLE_KEY to sign in.
+        </p>
+      )}
+      {clerkConfigured && (
+        <SignedOut>
+          <Link
+            to="/signin"
+            className="mt-2 inline-block text-sm text-white underline"
+          >
+            Sign in
+          </Link>
+        </SignedOut>
+      )}
       {!convexConfigured ? (
         <ol className="mt-6 list-decimal space-y-2 pl-5 text-sm text-neutral-300">
           <li>
@@ -61,8 +83,12 @@ export function HomePage() {
             Run <code className="text-white">bun run dev</code>.
           </li>
         </ol>
-      ) : (
+      ) : !clerkConfigured ? (
         <Feed />
+      ) : (
+        <SignedIn>
+          <Feed />
+        </SignedIn>
       )}
     </main>
   );

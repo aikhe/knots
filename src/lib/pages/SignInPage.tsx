@@ -55,7 +55,7 @@ export function SignInPage() {
         <p className="mt-6 text-sm text-neutral-400">
           Already signed in.{" "}
           <Link to="/home" className="text-white underline">
-            Back to tasks
+            Back to home
           </Link>
         </p>
       </SignedIn>
