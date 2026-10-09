@@ -15,7 +15,7 @@ function Feed({ myId }: { myId?: string }) {
   const searchQuery = useUIStore((s) => s.searchQuery);
 
   if (feed === undefined) {
-    return <p className="mt-6 text-sm text-neutral-500">Loading...</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Loading...</p>;
   }
 
   const q = searchQuery.trim().toLowerCase();
@@ -28,11 +28,11 @@ function Feed({ myId }: { myId?: string }) {
     : feed;
 
   if (visible.length === 0) {
-    return <p className="mt-6 text-sm text-neutral-500">Nothing here yet.</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Nothing here yet.</p>;
   }
 
   return (
-    <ul className="mt-2">
+    <ul>
       {visible.map((p) => (
         <PostItem
           key={p._id}

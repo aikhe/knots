@@ -13,7 +13,7 @@ function Requests() {
   const respond = useMutation(api.friends.respond);
 
   if (incoming === undefined) {
-    return <p className="mt-6 text-sm text-neutral-500">Loading...</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Loading...</p>;
   }
   if (incoming.length === 0) {
     return null;
@@ -21,7 +21,7 @@ function Requests() {
 
   return (
     <>
-      <h2 className="mt-6 text-sm text-neutral-500">Friend requests</h2>
+      <h2 className="mt-6 text-center text-sm text-neutral-500">Friend requests</h2>
       <ul className="divide-y divide-neutral-800">
         {incoming.map((r) => (
           <li key={r._id} className="flex items-center gap-2 py-3">
@@ -71,7 +71,7 @@ function Tugs() {
 
   return (
     <>
-      <h2 className="mt-6 text-sm text-neutral-500">Tugs</h2>
+      <h2 className="mt-6 text-center text-sm text-neutral-500">Tugs</h2>
       <ul className="divide-y divide-neutral-800">
         {incoming.map((t) => (
           <li key={t._id} className="flex items-center gap-2 py-3">
@@ -105,7 +105,7 @@ function Tugs() {
 
 function Empty({ show }: { show: boolean }) {
   if (!show) return null;
-  return <p className="mt-6 text-sm text-neutral-500">Nothing here yet.</p>;
+  return <p className="mt-6 text-center text-sm text-neutral-500">Nothing here yet.</p>;
 }
 
 function Notifications() {
@@ -118,7 +118,7 @@ function Notifications() {
     tugs === undefined ||
     notes === undefined
   ) {
-    return <p className="mt-6 text-sm text-neutral-500">Loading...</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Loading...</p>;
   }
   return (
     <>
@@ -126,7 +126,7 @@ function Notifications() {
       <Tugs />
       {(notes.filter((n) => !n.read) ?? []).length > 0 && (
         <>
-          <h2 className="mt-6 text-sm text-neutral-500">Reminders</h2>
+          <h2 className="mt-6 text-center text-sm text-neutral-500">Reminders</h2>
           <ul className="divide-y divide-neutral-800">
             {notes
               .filter((n) => !n.read)
@@ -170,7 +170,7 @@ export function InfoPage() {
     <main className="mx-auto max-w-2xl px-3 py-6">
       <h1 className="text-xl font-medium text-white">Info</h1>
       {!clerkConfigured ? (
-        <p className="mt-6 text-sm text-neutral-500">
+        <p className="mt-6 text-center text-sm text-neutral-500">
           Auth off. Add VITE_CLERK_PUBLISHABLE_KEY to sign in.
         </p>
       ) : (

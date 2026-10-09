@@ -11,10 +11,10 @@ function FriendsList() {
   const friends = useQuery(api.friends.list);
 
   if (friends === undefined) {
-    return <p className="mt-6 text-sm text-neutral-500">Loading...</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Loading...</p>;
   }
   if (friends.length === 0) {
-    return <p className="mt-6 text-sm text-neutral-500">No friends yet.</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">No friends yet.</p>;
   }
 
   return (
@@ -35,7 +35,7 @@ export function FriendsPage() {
     <main className="mx-auto max-w-2xl px-3 py-6">
       <h1 className="text-xl font-medium text-white">Friends</h1>
       {!clerkConfigured ? (
-        <p className="mt-6 text-sm text-neutral-500">
+        <p className="mt-6 text-center text-sm text-neutral-500">
           Auth off. Add VITE_CLERK_PUBLISHABLE_KEY to sign in.
         </p>
       ) : (

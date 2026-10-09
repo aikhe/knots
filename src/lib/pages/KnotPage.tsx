@@ -123,10 +123,10 @@ function Chat({
   }, [messages?.length]);
 
   if (knot === undefined || messages === undefined) {
-    return <p className="mt-6 text-sm text-neutral-500">Loading...</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Loading...</p>;
   }
   if (knot === null) {
-    return <p className="mt-6 text-sm text-neutral-500">Not found.</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Not found.</p>;
   }
 
   async function onSend(e: FormEvent) {
@@ -219,7 +219,7 @@ function Chat({
           <CheckIn knotId={knotId} />
           <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
             {messages.length === 0 ? (
-              <p className="text-sm text-neutral-500">No messages yet.</p>
+              <p className="text-center text-sm text-neutral-500">No messages yet.</p>
             ) : (
               <ul className="space-y-2">
                 {messages.map((m) => {

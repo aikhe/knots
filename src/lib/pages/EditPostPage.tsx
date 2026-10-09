@@ -23,10 +23,10 @@ function EditForm({ postId }: { postId: string }) {
   const [saving, setSaving] = useState(false);
 
   if (post === undefined) {
-    return <p className="mt-6 text-sm text-neutral-500">Loading...</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Loading...</p>;
   }
   if (post === null || post.authorId !== user?.id) {
-    return <p className="mt-6 text-sm text-neutral-500">Not found.</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Not found.</p>;
   }
 
   const value = text ?? post.text;
