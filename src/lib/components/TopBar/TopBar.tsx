@@ -2,47 +2,30 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { useUIStore } from "../../../store";
 
-function MenuIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path d="M3 5h14M3 10h14M3 15h14" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <circle cx="9" cy="9" r="5.5" />
-      <path d="M13.5 13.5 17 17" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const searchQuery = useUIStore((s) => s.searchQuery);
   const setSearchQuery = useUIStore((s) => s.setSearchQuery);
 
   return (
-    <header className="border-b border-neutral-800 bg-[#101010]">
-      <div className="flex items-center justify-between px-3 py-3">
+    <header className="bg-[#101010]">
+      <div className="flex items-center justify-between px-4 pb-4 pt-6">
         <button
           onClick={onMenuClick}
           aria-label="Menu"
           className="text-neutral-300 hover:text-white"
         >
-          <MenuIcon />
+          <img src="/MajesticonsMenuAlt.svg" alt="" className="h-6 w-6 invert scale-y-[0.85]" />
         </button>
-        <Link to="/home" aria-label="knots home">
-          <img src="/knots-wordmark.svg" alt="knots" className="h-4 w-auto" />
+        <Link to="/home" aria-label="knots home" className="hidden">
+          <img src="/knots-wordmark.svg" alt="knots" className="h-6 w-auto" />
         </Link>
         <button
           onClick={() => setSearchOpen((v) => !v)}
           aria-label="Search"
           className="text-neutral-300 hover:text-white"
         >
-          <SearchIcon />
+          <img src="/MajesticonsSearchLine.svg" alt="" className="h-7 w-7 invert opacity-70" />
         </button>
       </div>
       {searchOpen && (

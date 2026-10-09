@@ -75,7 +75,7 @@ export function PostItem({
   }
 
   return (
-    <li className="border-b border-neutral-800 py-3">
+    <li className="-mx-3 border-b border-neutral-800 px-3 py-3">
       <div className="flex gap-3">
         {avatarUrl ? (
           <img

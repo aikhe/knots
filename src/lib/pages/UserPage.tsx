@@ -88,7 +88,7 @@ export function UserPage() {
   const { username = "" } = useParams();
 
   return (
-    <main className="mx-auto max-w-2xl px-3 py-6">
+    <main className="mx-auto max-w-2xl px-3">
       <h1 className="text-xl font-medium text-white">Profile</h1>
       {!clerkConfigured ? (
         <p className="mt-6 text-sm text-neutral-500">

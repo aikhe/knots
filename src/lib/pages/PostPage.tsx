@@ -176,7 +176,7 @@ export function PostPage() {
   const { postId = "" } = useParams();
 
   return (
-    <main className="mx-auto max-w-2xl px-3 py-6">
+    <main className="mx-auto max-w-2xl px-3">
       {!clerkConfigured ? (
         <p className="mt-2 text-sm text-neutral-500">
           Auth off. Add VITE_CLERK_PUBLISHABLE_KEY to sign in.
