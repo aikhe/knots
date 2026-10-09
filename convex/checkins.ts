@@ -1,12 +1,39 @@
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { requireUserId } from "./users";
+import { callerUserId, requireUserId } from "./users";
 
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
     await requireUserId(ctx);
     return await ctx.storage.generateUploadUrl();
+  },
+});
+
+export const recent = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const userId = await callerUserId(ctx);
+    if (userId === null) return [];
+    const rows = await ctx.db
+      .query("checkins")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .order("desc")
+      .take(args.limit ?? 20);
+    const out = [];
+    for (const row of rows) {
+      const knot = await ctx.db.get(row.knotId);
+      if (!knot) continue;
+      out.push({
+        _id: row._id,
+        _creationTime: row._creationTime,
+        kind: row.kind,
+        text: row.text ?? null,
+        knotId: row.knotId,
+        knot: knot.title,
+      });
+    }
+    return out;
   },
 });
 

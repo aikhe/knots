@@ -131,3 +131,40 @@ export const status = query({
     return "incoming";
   },
 });
+
+export const activity = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await callerUserId(ctx);
+    if (userId === null) return [];
+    const sent = await ctx.db
+      .query("friend_requests")
+      .withIndex("by_from", (q) => q.eq("fromUserId", userId))
+      .collect();
+    const received = await ctx.db
+      .query("friend_requests")
+      .withIndex("by_to", (q) => q.eq("toUserId", userId))
+      .collect();
+    const ids = new Set<string>();
+    for (const r of [...sent, ...received]) {
+      if (r.status !== "accepted") continue;
+      ids.add(r.fromUserId === userId ? r.toUserId : r.fromUserId);
+    }
+    const weekAgo = Date.now() - 7 * 24 * 3600 * 1000;
+    const out = [];
+    for (const id of ids) {
+      const rows = await ctx.db
+        .query("checkins")
+        .withIndex("by_user", (q) => q.eq("userId", id))
+        .collect();
+      out.push({
+        userId: id,
+        username: await usernameOf(ctx, id),
+        displayName: await displayNameOf(ctx, id),
+        total: rows.length,
+        weekCount: rows.filter((r) => r._creationTime >= weekAgo).length,
+      });
+    }
+    return out.sort((a, b) => b.weekCount - a.weekCount);
+  },
+});
