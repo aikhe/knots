@@ -1,4 +1,4 @@
-import { NavLink } from "react-router";
+import { NavLink, useLocation } from "react-router";
 import { useUIStore } from "../../../store";
 
 const tabs = [
@@ -32,6 +32,8 @@ function Tab({
 
 export function BottomNav() {
   const setComposerOpen = useUIStore((s) => s.setComposerOpen);
+  const setComposerMode = useUIStore((s) => s.setComposerMode);
+  const location = useLocation();
 
   return (
     <nav className="border-t border-neutral-800 bg-[#101010]">
@@ -44,7 +46,12 @@ export function BottomNav() {
         <li className="flex-1">
           <div className="flex justify-center">
             <button
-              onClick={() => setComposerOpen(true)}
+              onClick={() => {
+                setComposerMode(
+                  location.pathname.startsWith("/knots") ? "knot" : "post",
+                );
+                setComposerOpen(true);
+              }}
               aria-label="Add"
               className="-mt-5 flex h-12 w-12 items-center justify-center rounded-full bg-white text-black"
             >
