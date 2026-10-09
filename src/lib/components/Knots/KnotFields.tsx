@@ -97,6 +97,7 @@ export function KnotFields({
             ))}
           </ul>
         )}
+      </div>
       <div className="flex flex-wrap gap-2">
         {STARTER_BLUEPRINTS.map((b) => (
           <button
