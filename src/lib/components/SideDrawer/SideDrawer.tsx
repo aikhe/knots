@@ -1,3 +1,4 @@
+import { motion } from "motion/react";
 import { Link, NavLink } from "react-router";
 
 const links = [
@@ -7,10 +8,22 @@ const links = [
   { to: "/profile", label: "Profile" },
 ];
 
-export function SideDrawer({ onClose }: { onClose: () => void }) {
+export function SideDrawer({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   return (
-    <nav className="absolute inset-y-0 left-0 flex w-[260px] flex-col border-r border-neutral-800 bg-[#101010]">
-      <div className="flex items-center justify-between px-4 py-3">
+    <motion.nav
+      initial={false}
+      animate={{ scale: open ? 1 : 0.97, opacity: open ? 1 : 0.8 }}
+      transition={{ type: "tween", duration: 0.25, ease: "easeOut" }}
+      style={{ transformOrigin: "left center" }}
+      className="absolute inset-y-0 left-0 flex w-[260px] flex-col border-r border-neutral-800 bg-[#101010]"
+    >
+      <div className="px-4 py-3">
         <Link
           to="/home"
           onClick={onClose}
@@ -18,15 +31,6 @@ export function SideDrawer({ onClose }: { onClose: () => void }) {
         >
           knots
         </Link>
-        <button
-          onClick={onClose}
-          aria-label="Close menu"
-          className="text-neutral-400 hover:text-white"
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" />
-          </svg>
-        </button>
       </div>
       <ul className="border-t border-neutral-800">
         {links.map((link) => (
@@ -43,6 +47,6 @@ export function SideDrawer({ onClose }: { onClose: () => void }) {
           </li>
         ))}
       </ul>
-    </nav>
+    </motion.nav>
   );
 }
