@@ -1,4 +1,4 @@
-import { SignedIn, SignedOut } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, useUser } from "@clerk/clerk-react";
 import { Link } from "react-router";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -10,7 +10,7 @@ const clerkConfigured = Boolean(
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
 );
 
-function Feed() {
+function Feed({ myId }: { myId?: string }) {
   const feed = useQuery(api.posts.feed);
   const searchQuery = useUIStore((s) => s.searchQuery);
 
@@ -38,21 +38,30 @@ function Feed() {
           key={p._id}
           id={p._id}
           author={p.author}
+          authorDisplay={p.authorDisplay}
           avatarUrl={p.authorAvatar}
           knot={p.knot}
           text={p.text}
           time={p._creationTime}
           likeCount={p.likeCount}
           likedByMe={p.likedByMe}
+          commentCount={p.commentCount}
+          canEdit={myId !== undefined && p.authorId === myId}
+          imageUrls={p.imageUrls}
         />
       ))}
     </ul>
   );
 }
 
+function AuthedFeed() {
+  const { user } = useUser();
+  return <Feed myId={user?.id} />;
+}
+
 export function HomePage() {
   return (
-    <main className="mx-auto max-w-2xl px-4 py-6">
+    <main className="mx-auto max-w-2xl px-3 py-6">
       {!clerkConfigured && (
         <p className="mt-2 text-sm text-neutral-500">
           Auth off. Add VITE_CLERK_PUBLISHABLE_KEY to sign in.
@@ -87,7 +96,7 @@ export function HomePage() {
         <Feed />
       ) : (
         <SignedIn>
-          <Feed />
+          <AuthedFeed />
         </SignedIn>
       )}
     </main>

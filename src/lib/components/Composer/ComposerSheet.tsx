@@ -15,6 +15,7 @@ import { Link } from "react-router";
 import { useUser } from "@clerk/clerk-react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
+import { KnotFields, type KnotKind } from "../Knots/KnotFields";
 import { useUIStore } from "../../../store";
 
 const clerkConfigured = Boolean(
@@ -37,15 +38,11 @@ function KnotForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
   const createKnot = useMutation(api.knots.create);
   const titleRef = useDeferredFocus<HTMLInputElement>(ready);
   const [title, setTitle] = useState("");
-  const [memberQuery, setMemberQuery] = useState("");
+  const [kind, setKind] = useState<KnotKind>("tied");
   const [memberIds, setMemberIds] = useState<
-    { userId: string; username: string }[]
+    { userId: string; username: string; displayName: string }[]
   >([]);
   const [error, setError] = useState<string | null>(null);
-  const searchResults = useQuery(
-    api.users.search,
-    memberQuery.trim() ? { prefix: memberQuery } : "skip",
-  );
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -53,6 +50,7 @@ function KnotForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
     try {
       await createKnot({
         title,
+        kind,
         joinable: false,
         memberUserIds: memberIds.map((m) => m.userId),
       });
@@ -64,38 +62,15 @@ function KnotForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
-      <input
-        ref={titleRef}
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Knot title"
-        className="w-full rounded border border-neutral-800 bg-neutral-950 px-2 py-1 text-sm text-white"
+      <KnotFields
+        title={title}
+        setTitle={setTitle}
+        kind={kind}
+        setKind={setKind}
+        memberIds={memberIds}
+        setMemberIds={setMemberIds}
+        titleRef={titleRef}
       />
-      <input
-        value={memberQuery}
-        onChange={(e) => setMemberQuery(e.target.value)}
-        placeholder="Add member by username"
-        className="w-full rounded border border-neutral-800 bg-neutral-950 px-2 py-1 text-sm text-white"
-      />
-      {(searchResults ?? []).map((u) => (
-        <button
-          key={u.userId}
-          type="button"
-          onClick={() =>
-            setMemberIds((ids) =>
-              ids.some((i) => i.userId === u.userId) ? ids : [...ids, u],
-            )
-          }
-          className="mr-2 text-sm text-neutral-300 underline"
-        >
-          {u.username}
-        </button>
-      ))}
-      {memberIds.length > 0 && (
-        <p className="text-sm text-neutral-400">
-          {memberIds.map((m) => m.username).join(", ")}
-        </p>
-      )}
       <button
         type="submit"
         className="w-full rounded bg-neutral-100 px-3 py-1.5 text-sm text-black"
@@ -110,6 +85,7 @@ function KnotForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
 function PostForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
   const { user } = useUser();
   const createPost = useMutation(api.posts.create);
+  const generateUrl = useMutation(api.posts.generateUploadUrl);
   const createKnot = useMutation(api.knots.create);
   const updateJoinable = useMutation(api.knots.setJoinable);
   const myKnots = useQuery(api.knots.mine);
@@ -119,17 +95,14 @@ function PostForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
   const [knotId, setKnotId] = useState("");
   const [makingKnot, setMakingKnot] = useState(false);
   const [title, setTitle] = useState("");
+  const [kind, setKind] = useState<KnotKind>("tied");
   const [isPublic, setIsPublic] = useState(false);
   const [joinable, setJoinable] = useState(false);
-  const [memberQuery, setMemberQuery] = useState("");
   const [memberIds, setMemberIds] = useState<
-    { userId: string; username: string }[]
+    { userId: string; username: string; displayName: string }[]
   >([]);
+  const [photos, setPhotos] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const searchResults = useQuery(
-    api.users.search,
-    memberQuery.trim() ? { prefix: memberQuery } : "skip",
-  );
 
   const picked = (myKnots ?? []).find((k) => k._id === knotId);
   const canFlipJoinable =
@@ -140,22 +113,24 @@ function PostForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
     setKnotId("");
     setMakingKnot(false);
     setTitle("");
+    setKind("tied");
     setIsPublic(false);
     setJoinable(false);
-    setMemberQuery("");
     setMemberIds([]);
+    setPhotos([]);
     setError(null);
   }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!text.trim()) return;
+    if (!text.trim() && photos.length === 0) return;
     setError(null);
     try {
       let target = knotId;
       if (makingKnot) {
         target = await createKnot({
           title,
+          kind,
           joinable,
           memberUserIds: memberIds.map((m) => m.userId),
         });
@@ -170,10 +145,22 @@ function PostForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
           joinable,
         });
       }
+      const imageStorageIds: Id<"_storage">[] = [];
+      for (const file of photos.slice(0, 10)) {
+        const url = await generateUrl();
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        const { storageId } = (await res.json()) as { storageId: string };
+        imageStorageIds.push(storageId as Id<"_storage">);
+      }
       await createPost({
         text,
         knotId: target as Id<"knots">,
         isPublic,
+        imageStorageIds,
       });
       reset();
       onDone();
@@ -192,6 +179,36 @@ function PostForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
         rows={3}
         className="w-full rounded border border-neutral-800 bg-neutral-950 px-2 py-1 text-sm text-white"
       />
+      <label className="block cursor-pointer text-sm text-neutral-400">
+        {photos.length > 0 ? `${photos.length} photos` : "Add photos"}
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) =>
+            setPhotos((prev) =>
+              [...prev, ...Array.from(e.target.files ?? [])].slice(0, 10),
+            )
+          }
+        />
+      </label>
+      {photos.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto">
+          {photos.map((f, i) => (
+            <button
+              key={`${f.name}-${i}`}
+              type="button"
+              onClick={() =>
+                setPhotos((prev) => prev.filter((_, j) => j !== i))
+              }
+              className="shrink-0 text-xs text-neutral-500 underline"
+            >
+              {f.name} ×
+            </button>
+          ))}
+        </div>
+      )}
       {!makingKnot ? (
         <div className="flex gap-2">
           <select
@@ -216,37 +233,14 @@ function PostForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
         </div>
       ) : (
         <div className="space-y-2 rounded border border-neutral-800 p-2">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Knot title"
-            className="w-full rounded border border-neutral-800 bg-neutral-950 px-2 py-1 text-sm text-white"
+          <KnotFields
+            title={title}
+            setTitle={setTitle}
+            kind={kind}
+            setKind={setKind}
+            memberIds={memberIds}
+            setMemberIds={setMemberIds}
           />
-          <input
-            value={memberQuery}
-            onChange={(e) => setMemberQuery(e.target.value)}
-            placeholder="Add member by username"
-            className="w-full rounded border border-neutral-800 bg-neutral-950 px-2 py-1 text-sm text-white"
-          />
-          {(searchResults ?? []).map((u) => (
-            <button
-              key={u.userId}
-              type="button"
-              onClick={() =>
-                setMemberIds((ids) =>
-                  ids.some((i) => i.userId === u.userId) ? ids : [...ids, u],
-                )
-              }
-              className="mr-2 text-sm text-neutral-300 underline"
-            >
-              {u.username}
-            </button>
-          ))}
-          {memberIds.length > 0 && (
-            <p className="text-sm text-neutral-400">
-              {memberIds.map((m) => m.username).join(", ")}
-            </p>
-          )}
           <button
             type="button"
             onClick={() => setMakingKnot(false)}
@@ -365,7 +359,7 @@ export function ComposerSheet() {
           >
             <div className="mx-auto h-1 w-10 rounded-full bg-neutral-700" />
           </div>
-          <div className="max-h-[82dvh] overflow-y-auto overscroll-contain px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-2">
+          <div className="max-h-[82dvh] overflow-y-auto overscroll-contain px-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-2">
             {!clerkConfigured ? (
               <p className="text-sm text-neutral-500">
                 Auth off. Add VITE_CLERK_PUBLISHABLE_KEY to post.
