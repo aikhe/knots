@@ -1,3 +1,5 @@
+<img alt="knots banner v1" src="https://github.com/user-attachments/assets/aa4b32bd-c74d-4b2b-a45f-fb065f67b59d" />
+
 # test-stack
 
 Vite + React + Tailwind + Convex starter on Bun.
