@@ -1,4 +1,5 @@
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
+import { BubsCard } from "../components/Bubs/BubsCard";
 import { Link } from "react-router";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -169,6 +170,7 @@ export function InfoPage() {
   return (
     <main className="mx-auto max-w-2xl px-3 py-6">
       <h1 className="text-xl font-medium text-white">Info</h1>
+      <BubsCard />
       {!clerkConfigured ? (
         <p className="mt-6 text-sm text-neutral-500">
           Auth off. Add VITE_CLERK_PUBLISHABLE_KEY to sign in.
