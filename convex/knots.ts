@@ -93,9 +93,17 @@ export const mine = query({
         joinable: knot.joinable,
         memberCount: members.length,
         rope: ropeState(score),
+        resting: m.resting === true,
         lastText: last?.text ?? null,
         lastTime: last?._creationTime ?? null,
         lastAuthor: last ? await usernameOf(ctx, last.authorId) : null,
+        lastNote: (
+          await ctx.db
+            .query("checkins")
+            .withIndex("by_knot", (q) => q.eq("knotId", m.knotId))
+            .order("desc")
+            .first()
+        )?.text ?? null,
       });
     }
     return out.sort((a, b) => b._creationTime - a._creationTime);
@@ -137,6 +145,13 @@ export const browse = query({
         lastText: last?.text ?? null,
         lastTime: last?._creationTime ?? null,
         lastAuthor: last ? await usernameOf(ctx, last.authorId) : null,
+        lastNote: (
+          await ctx.db
+            .query("checkins")
+            .withIndex("by_knot", (q) => q.eq("knotId", knot._id))
+            .order("desc")
+            .first()
+        )?.text ?? null,
       });
     }
     return out.sort((a, b) => b._creationTime - a._creationTime);
@@ -191,6 +206,92 @@ export const setRest = mutation({
       .unique();
     if (!row) throw new Error("Only knot members can rest.");
     await ctx.db.patch(row._id, { resting: args.resting });
+  },
+});
+
+export const rename = mutation({
+  args: { knotId: v.id("knots"), title: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
+    const knot = await ctx.db.get(args.knotId);
+    if (!knot) throw new Error("Knot not found.");
+    if (knot.creatorId !== userId) {
+      throw new Error("Only the creator can rename this knot.");
+    }
+    const title = args.title.trim();
+    if (!title) throw new Error("Knot title cannot be empty.");
+    await ctx.db.patch(args.knotId, { title });
+  },
+});
+
+export const removeMember = mutation({
+  args: { knotId: v.id("knots"), userId: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
+    const knot = await ctx.db.get(args.knotId);
+    if (!knot) throw new Error("Knot not found.");
+    if (knot.creatorId !== userId) {
+      throw new Error("Only the creator can remove members.");
+    }
+    if (args.userId === knot.creatorId) {
+      throw new Error("The creator cannot be removed.");
+    }
+    const row = await ctx.db
+      .query("knot_members")
+      .withIndex("by_knot", (q) => q.eq("knotId", args.knotId))
+      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .unique();
+    if (!row) throw new Error("Not a member.");
+    await ctx.db.delete(row._id);
+  },
+});
+
+export const removeKnot = mutation({
+  args: { knotId: v.id("knots") },
+  handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
+    const knot = await ctx.db.get(args.knotId);
+    if (!knot) throw new Error("Knot not found.");
+    if (knot.creatorId !== userId) {
+      throw new Error("Only the creator can delete this knot.");
+    }
+    const members = await ctx.db
+      .query("knot_members")
+      .withIndex("by_knot", (q) => q.eq("knotId", args.knotId))
+      .collect();
+    for (const m of members) await ctx.db.delete(m._id);
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_knot", (q) => q.eq("knotId", args.knotId))
+      .collect();
+    for (const m of messages) await ctx.db.delete(m._id);
+    const checkins = await ctx.db
+      .query("checkins")
+      .withIndex("by_knot", (q) => q.eq("knotId", args.knotId))
+      .collect();
+    for (const c of checkins) await ctx.db.delete(c._id);
+    const posts = await ctx.db
+      .query("posts")
+      .withIndex("by_knot", (q) => q.eq("knotId", args.knotId))
+      .collect();
+    for (const p of posts) {
+      const likes = await ctx.db
+        .query("likes")
+        .withIndex("by_post", (q) => q.eq("postId", p._id))
+        .collect();
+      for (const l of likes) await ctx.db.delete(l._id);
+      const comments = await ctx.db
+        .query("comments")
+        .withIndex("by_post", (q) => q.eq("postId", p._id))
+        .collect();
+      for (const c of comments) await ctx.db.delete(c._id);
+      await ctx.db.delete(p._id);
+    }
+    const tugs = await ctx.db.query("tugs").collect();
+    for (const t of tugs) {
+      if (t.knotId === args.knotId) await ctx.db.delete(t._id);
+    }
+    await ctx.db.delete(args.knotId);
   },
 });
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { SignedIn, SignedOut, useUser } from "@clerk/clerk-react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -102,6 +102,7 @@ function Chat({
   knotId: string;
   myId: string;
 }) {
+  const navigate = useNavigate();
   const knot = useQuery(api.knots.get, {
     knotId: knotId as Id<"knots">,
   });
@@ -116,6 +117,10 @@ function Chat({
   const setRest = useMutation(api.knots.setRest);
   const sendTug = useMutation(api.tugs.send);
   const [text, setText] = useState("");
+  const [name, setName] = useState<string | null>(null);
+  const renameKnot = useMutation(api.knots.rename);
+  const removeMember = useMutation(api.knots.removeMember);
+  const deleteKnot = useMutation(api.knots.removeKnot);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -155,6 +160,11 @@ function Chat({
             {stats.totalCheckins} check-ins · {stats.activeToday} active today
           </p>
         )}
+        {knot.isMember && !knot.resting && knot.rope === "slack" && (
+          <p className="mt-2 rounded-xl bg-neutral-900 px-3 py-2 text-xs text-neutral-300">
+            Stuck? Rest it for a breather, tug a member, or trim the goal.
+          </p>
+        )}
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {knot.members.map((m) => (
             <span key={m.userId} className="flex items-center gap-1 text-xs text-neutral-400">
@@ -171,9 +181,58 @@ function Chat({
                   tug
                 </button>
               )}
+              {knot.creatorId === myId && m.userId !== myId && (
+                <button
+                  onClick={() =>
+                    removeMember({ knotId: knot._id, userId: m.userId })
+                  }
+                  className="text-neutral-600 underline"
+                >
+                  remove
+                </button>
+              )}
             </span>
           ))}
         </div>
+        {knot.creatorId === myId && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (name !== null && name.trim()) {
+                renameKnot({ knotId: knot._id, title: name }).then(() =>
+                  setName(null),
+                );
+              }
+            }}
+            className="mt-2 flex gap-2"
+          >
+            <input
+              value={name ?? knot.title}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded border border-neutral-800 bg-neutral-950 px-2 py-1 text-xs text-white"
+            />
+            <button
+              type="submit"
+              className="shrink-0 text-xs text-white underline"
+            >
+              Rename
+            </button>
+          </form>
+        )}
+        {knot.creatorId === myId && (
+          <button
+            onClick={() => {
+              if (window.confirm(`Delete ${knot.title}?`)) {
+                deleteKnot({ knotId: knot._id }).then(() =>
+                  navigate("/knots"),
+                );
+              }
+            }}
+            className="mt-2 text-xs text-neutral-500 underline"
+          >
+            Delete knot
+          </button>
+        )}
         {knot.isMember && (
           <button
             onClick={() => setRest({ knotId: knot._id, resting: !knot.resting })}
