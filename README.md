@@ -12,15 +12,19 @@ Vite + React + Tailwind + Convex starter on Bun.
 - Convex backend (local-first dev via `bunx convex dev`)
 - Clerk auth (`VITE_CLERK_PUBLISHABLE_KEY` + a `convex` JWT template)
 - Zustand (UI state, `src/store.ts`), TanStack Query (non-Convex data,
-  `src/lib/queryClient.ts`), ArkType (validation, `src/lib/validators.ts`)
+  `src/lib/utils/queryClient.ts`), ArkType (validation,
+  `src/lib/utils/validators.ts`)
 
 ## Structure
 
-- `convex/` — backend: `schema.ts`, `tasks.ts`, `auth.config.ts`
+- `convex/` — backend: `schema.ts` (users, knots, members, posts),
+  `users.ts`, `knots.ts`, `posts.ts`, `auth.config.ts`
   (`_generated/` is produced by `convex dev`, committed)
-- `src/` — `main.tsx` (entry), `App.tsx` (tasks route), `router.tsx`
-  (MobileScreen layout, `/signin`, catch-all), `store.ts`,
-  `lib/components/` (feature folders: `Tasks/`, `TopBar/`, `BottomNav/`,
+- `src/` — `main.tsx` (entry), `router.tsx` (MobileScreen layout,
+  `/home`, `/knots`, `/info`, `/profile`, `/user/:username`, `/signin`,
+  catch-all),
+  `store.ts`,
+  `lib/components/` (feature folders: `Posts/`, `TopBar/`, `BottomNav/`,
   `SideDrawer/`, `Composer/`),
   `lib/layouts/` (`Backend.tsx`, Convex/Clerk providers, `MobileScreen/`
   phone-width frame), `lib/pages/` (`SignInPage.tsx`, lazy-loaded),

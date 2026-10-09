@@ -4,10 +4,14 @@ Vite + React + Tailwind base with per-user data. Stack: Bun, React 19 + TypeScri
 
 ## Structure
 
-- `convex/` — backend: `schema.ts`, `tasks.ts`, `auth.config.ts` (`_generated/` is produced by `convex dev`, committed).
-- `src/` — `main.tsx` (entry), `App.tsx` (tasks route), `router.tsx`
-  (MobileScreen layout, `/signin`, catch-all), `store.ts`,
-  `lib/components/` (feature folders: `Tasks/`, `TopBar/`, `BottomNav/`,
+- `convex/` — backend: `schema.ts` (users, knots, members, posts),
+  `users.ts`, `knots.ts`, `posts.ts`, `auth.config.ts` (`_generated/`
+  is produced by `convex dev`, committed).
+- `src/` — `main.tsx` (entry), `router.tsx`
+  (MobileScreen layout, `/home`, `/knots`, `/info`, `/profile`,
+  `/user/:username`, `/post/:postId`, `/knot/:knotId`, `/profile/edit`,
+  `/signin`, catch-all), `store.ts`,
+  `lib/components/` (feature folders: `Posts/`, `TopBar/`, `BottomNav/`,
   `SideDrawer/`, `Composer/`),
   `lib/layouts/` (`Backend.tsx`, Convex/Clerk providers, `MobileScreen/`
   phone-width frame), `lib/pages/` (`SignInPage.tsx`, lazy-loaded),
