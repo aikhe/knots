@@ -15,8 +15,10 @@
     "@tanstack/react-query": "^5.104.1",
     "arktype": "^2.2.8",
     "convex": "^1.46.0",
+    "motion": "^14.0.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-router": "^8.4.0",
     "tailwindcss": "^4.3.3",
     "zustand": "^5.0.15"
   },
