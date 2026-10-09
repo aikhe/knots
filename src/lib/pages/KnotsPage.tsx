@@ -11,20 +11,30 @@ function Row({
   title,
   meta,
   preview,
+  background,
 }: {
   id: string;
   title: string;
   meta: string;
   preview: string;
+  background?: string | null;
 }) {
   return (
-    <li>
+    <li className="-mx-3 px-3">
       <Link to={`/knot/${id}`} className="flex items-center gap-3 py-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-base text-white">
-          {title.slice(0, 1).toUpperCase()}
-        </div>
+        {background ? (
+          <img
+            src={background}
+            alt=""
+            className="h-14 w-14 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-base text-white">
+            {title.slice(0, 1).toUpperCase()}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
-          <p className="text-sm text-white">{title}</p>
+          <p className="text-base text-white">{title}</p>
           <p className="truncate text-sm text-neutral-500">{preview}</p>
         </div>
         <p className="shrink-0 text-xs text-neutral-600">{meta}</p>
@@ -46,23 +56,20 @@ export function KnotsPage() {
     : list;
 
   return (
-    <main className="mx-auto max-w-2xl px-3 py-6">
-      <h1 className="text-2xl font-medium text-white">Knots</h1>
+    <main className="mx-auto max-w-2xl px-3">
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Search"
-        className="mt-4 w-full rounded-full border border-neutral-800 bg-neutral-950 px-4 py-2 text-sm text-white"
+        className="w-full rounded-full bg-neutral-900 px-4 py-2 text-sm text-white"
       />
-      <div className="mt-3 flex gap-2">
+      <div className="mt-2 flex gap-1">
         {(["mine", "joinable"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`rounded-full border px-4 py-1.5 text-sm capitalize ${
-              tab === t
-                ? "border-neutral-500 text-white"
-                : "border-neutral-800 text-neutral-500"
+            className={`rounded-full px-4 py-1.5 text-sm capitalize ${
+              tab === t ? "bg-neutral-800 text-white" : "text-neutral-500"
             }`}
           >
             {t}
@@ -70,9 +77,9 @@ export function KnotsPage() {
         ))}
       </div>
       {list === undefined ? (
-        <p className="mt-4 text-sm text-neutral-500">Loading...</p>
+        <p className="mt-4 text-center text-sm text-neutral-500">Loading...</p>
       ) : visible.length === 0 ? (
-        <p className="mt-4 text-sm text-neutral-500">
+        <p className="mt-4 text-center text-sm text-neutral-500">
           {tab === "mine" ? "No knots yet. Tap + to make one." : "Nothing to join."}
         </p>
       ) : (
@@ -88,6 +95,7 @@ export function KnotsPage() {
                   ? `${k.lastAuthor}: ${k.lastText}`
                   : `${k.memberCount} ${k.memberCount === 1 ? "member" : "members"}`
               }
+              background={k.background ?? null}
             />
           ))}
         </ul>
