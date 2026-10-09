@@ -2,7 +2,7 @@ import { mutation, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { v } from "convex/values";
-import { callerUserId, requireUserId, usernameOf, avatarUrlOf } from "./users";
+import { callerUserId, requireUserId, usernameOf, avatarUrlOf, displayNameOf } from "./users";
 
 export async function likeInfo(
   ctx: QueryCtx | MutationCtx,
@@ -17,6 +17,18 @@ export async function likeInfo(
     likeCount: likes.length,
     likedByMe: likes.some((l) => l.userId === userId),
   };
+}
+
+export async function imageUrlsOf(
+  ctx: QueryCtx | MutationCtx,
+  post: Doc<"posts">,
+) {
+  const out: string[] = [];
+  for (const id of post.imageStorageIds ?? []) {
+    const url = await ctx.storage.getUrl(id);
+    if (url) out.push(url);
+  }
+  return out;
 }
 
 export const toggleLike = mutation({
@@ -41,11 +53,16 @@ export const create = mutation({
     text: v.string(),
     knotId: v.id("knots"),
     isPublic: v.boolean(),
+    imageStorageIds: v.optional(v.array(v.id("_storage"))),
   },
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
     const text = args.text.trim();
-    if (!text) throw new Error("Post cannot be empty.");
+    const images = args.imageStorageIds ?? [];
+    if (images.length > 10) throw new Error("At most 10 images.");
+    if (!text && images.length === 0) {
+      throw new Error("Post cannot be empty.");
+    }
     const knot = await ctx.db.get(args.knotId);
     if (!knot) throw new Error("Knot not found.");
     const membership = await ctx.db
@@ -59,6 +76,40 @@ export const create = mutation({
       authorId: userId,
       knotId: args.knotId,
       isPublic: args.isPublic,
+      imageStorageIds: images,
+    });
+  },
+});
+
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await requireUserId(ctx);
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+export const update = mutation({
+  args: {
+    postId: v.id("posts"),
+    text: v.string(),
+    isPublic: v.boolean(),
+    imageStorageIds: v.optional(v.array(v.id("_storage"))),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
+    const post = await ctx.db.get(args.postId);
+    if (!post || post.authorId !== userId) throw new Error("Not found.");
+    const text = args.text.trim();
+    const images = args.imageStorageIds ?? post.imageStorageIds ?? [];
+    if (images.length > 10) throw new Error("At most 10 images.");
+    if (!text && images.length === 0) {
+      throw new Error("Post cannot be empty.");
+    }
+    await ctx.db.patch(args.postId, {
+      text,
+      isPublic: args.isPublic,
+      imageStorageIds: images,
     });
   },
 });
@@ -79,28 +130,40 @@ export const feed = query({
       text: string;
       authorId: string;
       author: string;
+      authorDisplay: string;
       authorAvatar: string | null;
       knotId: string;
       knot: string;
       likeCount: number;
       likedByMe: boolean;
+      commentCount: number;
+      imageUrls: string[];
     }[] = [];
     const seen = new Set<string>();
     const pushPost = async (post: Doc<"posts">, knotTitle: string) => {
       if (seen.has(post._id)) return;
       seen.add(post._id);
       const { likeCount, likedByMe } = await likeInfo(ctx, post._id, userId);
+      const commentCount = (
+        await ctx.db
+          .query("comments")
+          .withIndex("by_post", (q) => q.eq("postId", post._id))
+          .collect()
+      ).length;
       out.push({
         _id: post._id,
         _creationTime: post._creationTime,
         text: post.text,
         authorId: post.authorId,
         author: await usernameOf(ctx, post.authorId),
+        authorDisplay: await displayNameOf(ctx, post.authorId),
         authorAvatar: await avatarUrlOf(ctx, post.authorId),
         knotId: post.knotId,
         knot: knotTitle,
         likeCount,
         likedByMe,
+        commentCount,
+        imageUrls: await imageUrlsOf(ctx, post),
       });
     };
     for (const knotId of knotIds) {
@@ -140,14 +203,23 @@ export const mine = query({
     for (const post of posts) {
       const knot = await ctx.db.get(post.knotId);
       const { likeCount, likedByMe } = await likeInfo(ctx, post._id, userId);
+      const commentCount = (
+        await ctx.db
+          .query("comments")
+          .withIndex("by_post", (q) => q.eq("postId", post._id))
+          .collect()
+      ).length;
       out.push({
         _id: post._id,
         _creationTime: post._creationTime,
         text: post.text,
         knotId: post.knotId,
         knot: knot?.title ?? "deleted knot",
+        authorDisplay: await displayNameOf(ctx, post.authorId),
         likeCount,
         likedByMe,
+        commentCount,
+        imageUrls: await imageUrlsOf(ctx, post),
       });
     }
     return out.sort((a, b) => b._creationTime - a._creationTime);
@@ -170,20 +242,31 @@ export const get = query({
       .unique();
     if (!post.isPublic && !membership) return null;
     const { likeCount, likedByMe } = await likeInfo(ctx, post._id, userId);
+    const commentCount = (
+      await ctx.db
+        .query("comments")
+        .withIndex("by_post", (q) => q.eq("postId", args.postId))
+        .collect()
+    ).length;
     return {
       _id: post._id,
       _creationTime: post._creationTime,
       text: post.text,
       authorId: post.authorId,
       author: await usernameOf(ctx, post.authorId),
+      authorDisplay: await displayNameOf(ctx, post.authorId),
       authorAvatar: await avatarUrlOf(ctx, post.authorId),
       knotId: post.knotId,
       knot: knot.title,
       knotJoinable: knot.joinable,
+      knotCreatorId: knot.creatorId,
       isMember: membership !== null,
       isPublic: post.isPublic,
       likeCount,
       likedByMe,
+      commentCount,
+      imageUrls: await imageUrlsOf(ctx, post),
+      imageIds: post.imageStorageIds ?? [],
     };
   },
 });
@@ -222,14 +305,23 @@ export const byUser = query({
         post._id,
         userId,
       );
+      const commentCount = (
+        await ctx.db
+          .query("comments")
+          .withIndex("by_post", (q) => q.eq("postId", post._id))
+          .collect()
+      ).length;
       out.push({
         _id: post._id,
         _creationTime: post._creationTime,
         text: post.text,
         knotId: post.knotId,
         knot: knot.title,
+        authorDisplay: await displayNameOf(ctx, post.authorId),
         likeCount,
         likedByMe,
+        commentCount,
+        imageUrls: await imageUrlsOf(ctx, post),
       });
     }
     return out.sort((a, b) => b._creationTime - a._creationTime);

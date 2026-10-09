@@ -45,6 +45,18 @@ export async function avatarUrlOf(
   return await ctx.storage.getUrl(user.avatarStorageId);
 }
 
+// Display name, falling back to username.
+export async function displayNameOf(
+  ctx: QueryCtx | MutationCtx,
+  userId: string,
+) {
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .unique();
+  return user?.displayName ?? user?.username ?? "unknown";
+}
+
 export const ensure = mutation({
   args: { username: v.string() },
   handler: async (ctx, args) => {
@@ -79,12 +91,18 @@ export const search = query({
     const prefix = args.prefix.trim().toLowerCase();
     if (!prefix) return [];
     const all = await ctx.db.query("users").collect();
-    return all
-      .filter(
-        (u) => u.userId !== userId && u.username.startsWith(prefix),
-      )
-      .slice(0, 10)
-      .map((u) => ({ userId: u.userId, username: u.username }));
+    const out = [];
+    for (const u of all.filter(
+      (u) => u.userId !== userId && u.username.startsWith(prefix),
+    )) {
+      out.push({
+        userId: u.userId,
+        username: u.username,
+        displayName: u.displayName ?? u.username,
+      });
+      if (out.length >= 10) break;
+    }
+    return out;
   },
 });
 
@@ -107,6 +125,37 @@ export const byUsername = query({
         ? await ctx.storage.getUrl(user.avatarStorageId)
         : null,
     };
+  },
+});
+
+export const trust = query({
+  args: { username: v.string() },
+  handler: async (ctx, args) => {
+    await requireUserId(ctx);
+    const target = await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) =>
+        q.eq("username", args.username.trim().toLowerCase()),
+      )
+      .unique();
+    if (!target) return null;
+    const rows = await ctx.db
+      .query("checkins")
+      .withIndex("by_user", (q) => q.eq("userId", target.userId))
+      .collect();
+    const days = new Set(
+      rows.map((r) => new Date(r._creationTime).toDateString()),
+    );
+    let streak = 0;
+    const day = new Date();
+    if (!days.has(day.toDateString())) day.setDate(day.getDate() - 1);
+    while (days.has(day.toDateString())) {
+      streak += 1;
+      day.setDate(day.getDate() - 1);
+    }
+    const level =
+      streak >= 30 ? "Locked in" : streak >= 7 ? "Steady" : "Warming up";
+    return { total: rows.length, streak, level };
   },
 });
 

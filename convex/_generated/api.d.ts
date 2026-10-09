@@ -8,10 +8,17 @@
  * @module
  */
 
+import type * as checkins from "../checkins.js";
+import type * as comments from "../comments.js";
+import type * as crons from "../crons.js";
 import type * as friends from "../friends.js";
+import type * as knotScore from "../knotScore.js";
 import type * as knots from "../knots.js";
 import type * as messages from "../messages.js";
+import type * as notifications from "../notifications.js";
 import type * as posts from "../posts.js";
+import type * as reminders from "../reminders.js";
+import type * as tugs from "../tugs.js";
 import type * as users from "../users.js";
 
 import type {
@@ -21,10 +28,17 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  checkins: typeof checkins;
+  comments: typeof comments;
+  crons: typeof crons;
   friends: typeof friends;
+  knotScore: typeof knotScore;
   knots: typeof knots;
   messages: typeof messages;
+  notifications: typeof notifications;
   posts: typeof posts;
+  reminders: typeof reminders;
+  tugs: typeof tugs;
   users: typeof users;
 }>;
 

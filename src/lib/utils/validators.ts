@@ -15,6 +15,7 @@ export const KnotSchema = type({
   _creationTime: "number",
   title: "string",
   creatorId: "string",
+  kind: "'solo'|'tied'|'squad'",
   joinable: "boolean",
 });
 
@@ -25,6 +26,7 @@ export const PostSchema = type({
   authorId: "string",
   knotId: "string",
   isPublic: "boolean",
+  "imageStorageIds?": "string[]",
 });
 
 export type KnotUser = typeof UserSchema.infer;

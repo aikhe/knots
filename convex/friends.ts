@@ -1,7 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { v } from "convex/values";
-import { callerUserId, requireUserId, usernameOf } from "./users";
+import { callerUserId, requireUserId, usernameOf, displayNameOf } from "./users";
 
 async function existingBetween(
   ctx: QueryCtx | MutationCtx,
@@ -61,6 +61,7 @@ export const incoming = query({
         _id: row._id,
         _creationTime: row._creationTime,
         username: await usernameOf(ctx, row.fromUserId),
+        displayName: await displayNameOf(ctx, row.fromUserId),
       });
     }
     return out.sort((a, b) => b._creationTime - a._creationTime);
@@ -100,7 +101,11 @@ export const list = query({
     }
     const out = [];
     for (const id of ids) {
-      out.push({ userId: id, username: await usernameOf(ctx, id) });
+      out.push({
+        userId: id,
+        username: await usernameOf(ctx, id),
+        displayName: await displayNameOf(ctx, id),
+      });
     }
     return out.sort((a, b) => a.username.localeCompare(b.username));
   },
