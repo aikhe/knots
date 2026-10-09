@@ -1,6 +1,8 @@
-import { useQuery } from "convex/react";
+import { useState, type FormEvent } from "react";
+import { useMutation, useQuery } from "convex/react";
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import { api } from "../convex/_generated/api";
+import type { Id } from "../convex/_generated/dataModel";
 import { useUIStore } from "./store";
 import type { Task } from "./lib/validators";
 
@@ -29,10 +31,14 @@ function AuthHeader() {
   );
 }
 
-function TasksView() {
+function TaskManager() {
   const tasks = useQuery(api.tasks.get) as Task[] | undefined;
+  const createTask = useMutation(api.tasks.create);
+  const toggleTask = useMutation(api.tasks.toggle);
+  const removeTask = useMutation(api.tasks.remove);
   const showCompletedOnly = useUIStore((s) => s.showCompletedOnly);
   const toggleCompletedOnly = useUIStore((s) => s.toggleCompletedOnly);
+  const [text, setText] = useState("");
 
   if (tasks === undefined) {
     return <p className="mt-6 text-sm text-neutral-500">Loading tasks...</p>;
@@ -42,9 +48,30 @@ function TasksView() {
     ? tasks.filter((t) => t.isCompleted)
     : tasks;
 
+  async function onAdd(e: FormEvent) {
+    e.preventDefault();
+    if (!text.trim()) return;
+    await createTask({ text });
+    setText("");
+  }
+
   return (
     <div className="mt-6">
-      <label className="flex items-center gap-2 text-sm text-neutral-400">
+      <form onSubmit={onAdd} className="flex gap-2">
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="New task"
+          className="w-full rounded border border-neutral-800 bg-neutral-950 px-2 py-1 text-sm text-white"
+        />
+        <button
+          type="submit"
+          className="rounded bg-neutral-100 px-3 py-1 text-sm text-black"
+        >
+          Add
+        </button>
+      </form>
+      <label className="mt-4 flex items-center gap-2 text-sm text-neutral-400">
         <input
           type="checkbox"
           checked={showCompletedOnly}
@@ -54,26 +81,53 @@ function TasksView() {
       </label>
       {visible.length === 0 ? (
         <p className="mt-4 text-sm text-neutral-500">
-          No tasks yet. Add rows to the tasks table from the Convex dashboard
-          (`bunx convex dashboard`).
+          No tasks yet. Add one above.
         </p>
       ) : (
         <ul className="mt-4 space-y-1 text-sm text-neutral-300">
           {visible.map((task) => (
             <li key={task._id} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={task.isCompleted}
+                onChange={() =>
+                  toggleTask({ id: task._id as Id<"tasks"> })
+                }
+              />
               <span
                 className={
                   task.isCompleted ? "text-neutral-500" : "text-white"
                 }
               >
-                {task.isCompleted ? "done" : "todo"}
+                {task.text}
               </span>
-              <span>{task.text}</span>
+              <button
+                onClick={() => removeTask({ id: task._id as Id<"tasks"> })}
+                className="ml-auto text-sm text-neutral-500 hover:text-white"
+              >
+                Delete
+              </button>
             </li>
           ))}
         </ul>
       )}
     </div>
+  );
+}
+
+function TasksView() {
+  if (!clerkConfigured) return <TaskManager />;
+  return (
+    <>
+      <SignedOut>
+        <p className="mt-6 text-sm text-neutral-500">
+          Sign in to manage your tasks.
+        </p>
+      </SignedOut>
+      <SignedIn>
+        <TaskManager />
+      </SignedIn>
+    </>
   );
 }
 
