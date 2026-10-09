@@ -8,6 +8,7 @@ export const TaskSchema = type({
   _creationTime: "number",
   text: "string",
   isCompleted: "boolean",
+  userId: "string",
 });
 
 export type Task = typeof TaskSchema.infer;
