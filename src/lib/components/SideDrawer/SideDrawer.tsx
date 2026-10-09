@@ -23,7 +23,7 @@ export function SideDrawer({
       style={{ transformOrigin: "left center" }}
       className="absolute inset-y-0 left-0 flex w-[260px] flex-col border-r border-neutral-800 bg-[#101010]"
     >
-      <div className="px-4 py-3">
+      <div className="px-3 py-3">
         <Link
           to="/home"
           onClick={onClose}
@@ -39,7 +39,7 @@ export function SideDrawer({
               to={link.to}
               onClick={onClose}
               className={({ isActive }) =>
-                `block px-4 py-3 text-sm ${isActive ? "text-white" : "text-neutral-400"}`
+                `block px-3 py-3 text-sm ${isActive ? "text-white" : "text-neutral-400"}`
               }
             >
               {link.label}

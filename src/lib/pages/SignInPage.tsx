@@ -7,7 +7,7 @@ const clerkConfigured = Boolean(
 
 export function SignInPage() {
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10">
+    <main className="mx-auto max-w-2xl px-3 py-10">
       <Link to="/home" className="text-xl font-medium text-white">
         knots
       </Link>

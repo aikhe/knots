@@ -122,7 +122,7 @@ export function EditProfilePage() {
   const me = useQuery(api.users.me);
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-6">
+    <main className="mx-auto max-w-2xl px-3 py-6">
       <div className="flex items-center justify-between">
         <Link to="/profile" className="text-sm text-neutral-400">
           Cancel

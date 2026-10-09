@@ -26,7 +26,7 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
 
   return (
     <header className="border-b border-neutral-800 bg-[#101010]">
-      <div className="flex items-center justify-between px-4 py-3">
+      <div className="flex items-center justify-between px-3 py-3">
         <button
           onClick={onMenuClick}
           aria-label="Menu"
@@ -46,7 +46,7 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
         </button>
       </div>
       {searchOpen && (
-        <div className="border-t border-neutral-800 px-4 py-2">
+        <div className="border-t border-neutral-800 px-3 py-2">
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

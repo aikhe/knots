@@ -8,25 +8,24 @@ const clerkKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as
   | string
   | undefined;
 
+// Module singleton: creating this in render would drop the socket on
+// every re-render.
+const convexClient = convexUrl
+  ? new ConvexReactClient(convexUrl)
+  : null;
+
 export function Backend({ children }: { children: ReactNode }) {
-  if (convexUrl && clerkKey) {
+  if (convexClient && clerkKey) {
     return (
       <ClerkProvider publishableKey={clerkKey}>
-        <ConvexProviderWithClerk
-          client={new ConvexReactClient(convexUrl)}
-          useAuth={useAuth}
-        >
+        <ConvexProviderWithClerk client={convexClient} useAuth={useAuth}>
           {children}
         </ConvexProviderWithClerk>
       </ClerkProvider>
     );
   }
-  if (convexUrl) {
-    return (
-      <ConvexProvider client={new ConvexReactClient(convexUrl)}>
-        {children}
-      </ConvexProvider>
-    );
+  if (convexClient) {
+    return <ConvexProvider client={convexClient}>{children}</ConvexProvider>;
   }
   return <>{children}</>;
 }
