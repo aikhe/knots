@@ -1,0 +1,11 @@
+:root {
+  color-scheme: dark;
+  --color-bg: #000;
+  --color-text: #fff;
+
+  /* type */
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+  --font-weight-body: 400;
+  --letter-spacing-body: 0.34%;
+}
