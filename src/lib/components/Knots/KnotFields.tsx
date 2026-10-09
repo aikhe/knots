@@ -2,6 +2,7 @@ import { useState, type RefObject } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { KNOT_BACKGROUNDS } from "../../utils/knotBackgrounds";
+import { STARTER_BLUEPRINTS } from "../../ai/models";
 
 export type KnotKind = "solo" | "tied" | "squad";
 
@@ -96,6 +97,17 @@ export function KnotFields({
             ))}
           </ul>
         )}
+      <div className="flex flex-wrap gap-2">
+        {STARTER_BLUEPRINTS.map((b) => (
+          <button
+            key={b.id}
+            type="button"
+            onClick={() => setTitle(b.title)}
+            className="rounded-full bg-neutral-800 px-3 py-1 text-xs text-neutral-400"
+          >
+            {b.title}
+          </button>
+        ))}
       </div>
       {cap > 0 && (
         <>

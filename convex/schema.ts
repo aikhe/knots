@@ -62,7 +62,11 @@ export default defineSchema({
 
   notifications: defineTable({
     userId: v.string(),
-    kind: v.union(v.literal("reminder"), v.literal("tug")),
+    kind: v.union(
+      v.literal("reminder"),
+      v.literal("tug"),
+      v.literal("digest"),
+    ),
     knotId: v.optional(v.id("knots")),
     text: v.string(),
     read: v.boolean(),

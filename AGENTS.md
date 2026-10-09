@@ -17,7 +17,8 @@ Vite + React + Tailwind base with per-user data. Stack: Bun, React 19 + TypeScri
   `/knot/:knotId`, `/profile/edit`, `/join/:token`,
   `/signin`, catch-all), `store.ts`,
   `lib/components/` (feature folders: `Posts/`, `TopBar/`, `BottomNav/`,
-  `SideDrawer/`, `Composer/`, `Knots/`),
+  `SideDrawer/`, `Composer/`, `Knots/`, `Bubs/`), `lib/ai/` (on-device embeddings
+  engine: worker, hook, attest outbox),
   `lib/layouts/` (`Backend.tsx`, Convex/Clerk providers, `MobileScreen/`
   phone-width frame), `lib/pages/` (`SignInPage.tsx`, lazy-loaded),
   `lib/utils/` (`queryClient.ts`, `validators.ts`),
