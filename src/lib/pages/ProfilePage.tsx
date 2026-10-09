@@ -12,6 +12,10 @@ function ProfileDetails() {
   const posts = useQuery(api.posts.mine);
   const knots = useQuery(api.knots.mine);
   const me = useQuery(api.users.me);
+  const trust = useQuery(
+    api.users.trust,
+    me ? { username: me.username } : "skip",
+  );
   const friends = useQuery(api.friends.list);
   const name = me?.displayName ?? me?.username ?? "you";
 
@@ -37,6 +41,11 @@ function ProfileDetails() {
               ? "Loading data..."
               : `${knots.length} knots, ${posts.length} posts`}
           </p>
+          {trust && (
+            <p className="text-sm text-neutral-500">
+              {trust.level} · {trust.streak}-day rhythm
+            </p>
+          )}
         </div>
       </div>
       <div className="mt-4 flex gap-4">
@@ -50,24 +59,15 @@ function ProfileDetails() {
         </SignOutButton>
       </div>
       <div className="mt-4">
-        <p className="text-sm text-neutral-500">
-          {friends === undefined
-            ? "Loading friends..."
-            : `${friends.length} ${friends.length === 1 ? "friend" : "friends"}`}
-        </p>
-        {(friends ?? []).length > 0 && (
-          <ul className="mt-1 flex flex-wrap gap-2">
-            {friends?.map((f) => (
-              <li key={f.userId}>
-                <Link
-                  to={`/user/${f.username}`}
-                  className="text-sm text-neutral-300 underline"
-                >
-                  {f.username}
-                </Link>
-              </li>
-            ))}
-          </ul>
+        {friends === undefined ? (
+          <p className="text-sm text-neutral-500">Loading friends...</p>
+        ) : (
+          <Link
+            to="/profile/friends"
+            className="text-sm text-neutral-500 underline"
+          >
+            {friends.length} {friends.length === 1 ? "friend" : "friends"}
+          </Link>
         )}
       </div>
       <div className="mt-6 border-t border-neutral-800 pt-2">
@@ -82,12 +82,18 @@ function ProfileDetails() {
                 key={p._id}
                 id={p._id}
                 author={me?.username ?? "you"}
+                authorDisplay={
+                  me?.displayName ?? me?.username ?? "you"
+                }
                 avatarUrl={me?.avatarUrl}
                 knot={p.knot}
                 text={p.text}
                 time={p._creationTime}
                 likeCount={p.likeCount}
                 likedByMe={p.likedByMe}
+                commentCount={p.commentCount}
+                canEdit
+                imageUrls={p.imageUrls}
               />
             ))}
           </ul>
@@ -99,7 +105,7 @@ function ProfileDetails() {
 
 export function ProfilePage() {
   return (
-    <main className="mx-auto max-w-2xl px-4 py-6">
+    <main className="mx-auto max-w-2xl px-3 py-6">
       <h1 className="text-xl font-medium text-white">Profile</h1>
       {!clerkConfigured ? (
         <p className="mt-6 text-sm text-neutral-500">

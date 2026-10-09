@@ -12,6 +12,7 @@ function UserDetails({ username }: { username: string }) {
   const profile = useQuery(api.users.byUsername, { username });
   const posts = useQuery(api.posts.byUser, { username });
   const shared = useQuery(api.knots.sharedWith, { username });
+  const trust = useQuery(api.users.trust, { username });
   const relation = useQuery(api.friends.status, { username });
   const sendRequest = useMutation(api.friends.send);
 
@@ -28,6 +29,11 @@ function UserDetails({ username }: { username: string }) {
         {profile.displayName ?? profile.username}
       </p>
       <p className="text-sm text-neutral-500">{profile.username}</p>
+      {trust && (
+        <p className="mt-1 text-sm text-neutral-500">
+          {trust.level} · {trust.streak}-day rhythm
+        </p>
+      )}
       <p className="mt-1 text-sm text-neutral-500">
         {posts.length} {posts.length === 1 ? "post" : "posts"} visible to you
       </p>
@@ -60,12 +66,15 @@ function UserDetails({ username }: { username: string }) {
                 key={p._id}
                 id={p._id}
                 author={username}
+                authorDisplay={profile.displayName ?? username}
                 avatarUrl={profile.avatarUrl}
                 knot={p.knot}
                 text={p.text}
                 time={p._creationTime}
                 likeCount={p.likeCount}
                 likedByMe={p.likedByMe}
+                commentCount={p.commentCount}
+                imageUrls={p.imageUrls}
               />
             ))}
           </ul>
@@ -79,7 +88,7 @@ export function UserPage() {
   const { username = "" } = useParams();
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-6">
+    <main className="mx-auto max-w-2xl px-3 py-6">
       <h1 className="text-xl font-medium text-white">Profile</h1>
       {!clerkConfigured ? (
         <p className="mt-6 text-sm text-neutral-500">
