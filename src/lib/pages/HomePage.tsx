@@ -118,6 +118,22 @@ function AuthedFeed() {
   return <Feed myId={user?.id} />;
 }
 
+function StartCard() {
+  const knots = useQuery(api.knots.mine);
+  if (knots === undefined || knots.length > 0) return null;
+  return (
+    <Link
+      to="/welcome"
+      className="mt-6 block rounded-2xl border border-neutral-800 bg-neutral-950 p-4"
+    >
+      <p className="text-sm font-medium text-white">New here?</p>
+      <p className="mt-1 text-sm text-neutral-400">
+        Tie your first knot in under a minute.
+      </p>
+    </Link>
+  );
+}
+
 export function HomePage() {
   return (
     <main className="mx-auto max-w-2xl px-3 py-6">
@@ -155,6 +171,7 @@ export function HomePage() {
         <Feed />
       ) : (
         <SignedIn>
+          <StartCard />
           <AuthedFeed />
         </SignedIn>
       )}

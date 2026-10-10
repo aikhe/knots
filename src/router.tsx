@@ -1,7 +1,8 @@
-import { createBrowserRouter, Navigate } from "react-router";
+import { createBrowserRouter, Navigate, Outlet } from "react-router";
 import { HomePage } from "./lib/pages/HomePage";
 import { InfoPage } from "./lib/pages/InfoPage";
 import { KnotsPage } from "./lib/pages/KnotsPage";
+import { OnboardingPage } from "./lib/pages/OnboardingPage";
 import { KnotPage } from "./lib/pages/KnotPage";
 import { ErrorPage } from "./lib/pages/ErrorPage";
 import { JoinPage } from "./lib/pages/JoinPage";
@@ -11,7 +12,7 @@ import { EditProfilePage } from "./lib/pages/EditProfilePage";
 import { PostPage } from "./lib/pages/PostPage";
 import { EditPostPage } from "./lib/pages/EditPostPage";
 import { UserPage } from "./lib/pages/UserPage";
-import { MobileScreen } from "./lib/layouts/MobileScreen/MobileScreen";
+import { MobileScreen, BareScreen } from "./lib/layouts/MobileScreen/MobileScreen";
 
 export const router = createBrowserRouter([
   {
@@ -39,5 +40,13 @@ export const router = createBrowserRouter([
       },
       { path: "*", element: <Navigate to="/home" replace /> },
     ],
+  },
+  {
+    element: (
+      <BareScreen>
+        <Outlet />
+      </BareScreen>
+    ),
+    children: [{ path: "welcome", element: <OnboardingPage /> }],
   },
 ]);
