@@ -12,7 +12,7 @@ const fill: Record<string, string> = {
 
 export function RopeMeter({ rope }: { rope: "tight" | "firm" | "slack" }) {
   return (
-    <div className="mx-auto flex w-4/5 items-center gap-2">
+    <div className="flex items-center gap-2">
       <div className="h-2.5 flex-1 rounded-full bg-neutral-800">
         <div className={`h-2.5 rounded-full ${fill[rope]} ${width[rope]}`} />
       </div>

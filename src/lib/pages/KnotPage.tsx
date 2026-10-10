@@ -165,7 +165,7 @@ function Chat({
           </div>
           <p className="mt-2 text-center text-base text-white">{knot.title}</p>
         </div>
-        <div className="mt-2">
+        <div className="mx-auto mt-2 w-4/5">
           <RopeMeter rope={knot.rope} />
         </div>
         {stats && (
