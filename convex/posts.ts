@@ -114,6 +114,34 @@ export const update = mutation({
   },
 });
 
+export const remove = mutation({
+  args: { postId: v.id("posts") },
+  handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
+    const post = await ctx.db.get(args.postId);
+    if (!post || post.authorId !== userId) throw new Error("Not found.");
+    const likes = await ctx.db
+      .query("likes")
+      .withIndex("by_post", (q) => q.eq("postId", args.postId))
+      .collect();
+    for (const l of likes) await ctx.db.delete(l._id);
+    const comments = await ctx.db
+      .query("comments")
+      .withIndex("by_post", (q) => q.eq("postId", args.postId))
+      .collect();
+    for (const c of comments) {
+      if (c.imageStorageId) {
+        await ctx.storage.delete(c.imageStorageId).catch(() => {});
+      }
+      await ctx.db.delete(c._id);
+    }
+    for (const id of post.imageStorageIds ?? []) {
+      await ctx.storage.delete(id).catch(() => {});
+    }
+    await ctx.db.delete(args.postId);
+  },
+});
+
 export const feed = query({
   args: {},
   handler: async (ctx) => {
