@@ -2,7 +2,7 @@ import { mutation, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
-import { callerUserId, requireUserId, usernameOf, displayNameOf } from "./users";
+import { callerUserId, requireUserId, usernameOf, displayNameOf, avatarUrlOf } from "./users";
 import { knotScore, memberScore, ropeState } from "./knotScore";
 
 type Ctx = QueryCtx | MutationCtx;
@@ -374,6 +374,7 @@ export const get = query({
         userId: row.userId,
         username: await usernameOf(ctx, row.userId),
         displayName: await displayNameOf(ctx, row.userId),
+        avatarUrl: await avatarUrlOf(ctx, row.userId),
       });
     }
     const knotMessages =
@@ -407,6 +408,7 @@ export const get = query({
       creatorId: knot.creatorId,
       kind: knot.kind,
       joinable: knot.joinable,
+      background: knot.background ?? null,
       isMember: member !== null,
       resting: member?.resting === true,
       rope: ropeState(score),
