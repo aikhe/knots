@@ -17,48 +17,66 @@ function UserDetails({ username }: { username: string }) {
   const sendRequest = useMutation(api.friends.send);
 
   if (profile === undefined || posts === undefined || shared === undefined) {
-    return <p className="mt-6 text-sm text-neutral-500">Loading...</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Loading...</p>;
   }
   if (profile === null) {
-    return <p className="mt-6 text-sm text-neutral-500">No such user.</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">No such user.</p>;
   }
 
   return (
-    <div className="mt-6">
-      <p className="text-sm text-white">
-        {profile.displayName ?? profile.username}
-      </p>
-      <p className="text-sm text-neutral-500">{profile.username}</p>
-      {trust && (
-        <p className="mt-1 text-sm text-neutral-500">
-          {trust.level} · {trust.streak}-day rhythm
-        </p>
-      )}
-      <p className="mt-1 text-sm text-neutral-500">
-        {posts.length} {posts.length === 1 ? "post" : "posts"} visible to you
-      </p>
-      {shared.length > 0 && (
-        <p className="mt-1 text-sm text-neutral-500">
-          Shared knots: {shared.map((k) => k.title).join(", ")}
-        </p>
-      )}
+    <div>
+      <div className="flex items-start gap-3 pt-2">
+        {profile.avatarUrl ? (
+          <img
+            src={profile.avatarUrl}
+            alt={profile.displayName ?? username}
+            className="h-20 w-20 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-2xl text-white">
+            {(profile.displayName ?? username).slice(0, 1).toUpperCase()}
+          </div>
+        )}
+        <div>
+          <p className="text-xl leading-tight text-white">
+            {profile.displayName ?? profile.username}
+          </p>
+          <p className="text-sm leading-tight text-white">
+            {profile.username}
+          </p>
+          {trust && (
+            <p className="mt-1 text-sm text-neutral-500">
+              {trust.level} · {trust.streak}-day streak
+            </p>
+          )}
+          <p className="mt-1 text-sm text-neutral-500">
+            {posts.length} {posts.length === 1 ? "post" : "posts"} visible
+            to you
+          </p>
+          {shared.length > 0 && (
+            <p className="mt-1 text-sm text-neutral-500">
+              Shared knots: {shared.map((k) => k.title).join(", ")}
+            </p>
+          )}
+        </div>
+      </div>
       {relation === "none" && (
         <button
           onClick={() => sendRequest({ username })}
-          className="mt-3 text-sm text-white underline"
+          className="mt-5 w-full rounded-full bg-neutral-800 px-4 py-1.5 text-base text-white"
         >
           Add friend
         </button>
       )}
       {relation === "requested" && (
-        <p className="mt-3 text-sm text-neutral-500">Request sent.</p>
+        <p className="mt-5 text-sm text-neutral-500">Request sent.</p>
       )}
       {relation === "friends" && (
-        <p className="mt-3 text-sm text-neutral-500">Friends.</p>
+        <p className="mt-5 text-sm text-neutral-500">Friends.</p>
       )}
-      <div className="mt-4 border-t border-neutral-800">
+      <div className="mt-2 pt-2">
         {posts.length === 0 ? (
-          <p className="mt-2 text-sm text-neutral-500">No posts to show.</p>
+          <p className="mt-2 text-center text-sm text-neutral-500">No posts to show.</p>
         ) : (
           <ul>
             {posts.map((p) => (
@@ -88,10 +106,9 @@ export function UserPage() {
   const { username = "" } = useParams();
 
   return (
-    <main className="mx-auto max-w-2xl px-3 py-6">
-      <h1 className="text-xl font-medium text-white">Profile</h1>
+    <main className="mx-auto max-w-2xl px-3">
       {!clerkConfigured ? (
-        <p className="mt-6 text-sm text-neutral-500">
+        <p className="mt-6 text-center text-sm text-neutral-500">
           Auth off. Add VITE_CLERK_PUBLISHABLE_KEY to sign in.
         </p>
       ) : (

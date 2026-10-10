@@ -12,6 +12,7 @@ function EditForm({ postId }: { postId: string }) {
     postId: postId as Id<"posts">,
   });
   const updatePost = useMutation(api.posts.update);
+  const removePost = useMutation(api.posts.remove);
   const updateJoinable = useMutation(api.knots.setJoinable);
   const generateUrl = useMutation(api.posts.generateUploadUrl);
   const [text, setText] = useState<string | null>(null);
@@ -23,10 +24,10 @@ function EditForm({ postId }: { postId: string }) {
   const [saving, setSaving] = useState(false);
 
   if (post === undefined) {
-    return <p className="mt-6 text-sm text-neutral-500">Loading...</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Loading...</p>;
   }
   if (post === null || post.authorId !== user?.id) {
-    return <p className="mt-6 text-sm text-neutral-500">Not found.</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Not found.</p>;
   }
 
   const value = text ?? post.text;
@@ -162,6 +163,18 @@ function EditForm({ postId }: { postId: string }) {
         >
           Cancel
         </Link>
+      </div>
+      <div className="mt-2 flex items-center justify-center">
+        <button
+          onClick={() => {
+            if (window.confirm("Delete this post?")) {
+              removePost({ postId: pid }).then(() => navigate("/home"));
+            }
+          }}
+          className="text-sm text-neutral-500"
+        >
+          Delete post
+        </button>
       </div>
     </>
   );

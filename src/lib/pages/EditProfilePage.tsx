@@ -62,19 +62,19 @@ function EditForm({
 
   return (
     <>
-      <div className="mt-6 flex flex-col items-center">
+      <div className="mt-2 flex flex-col items-center">
         {shownAvatar ? (
           <img
             src={shownAvatar}
             alt="Profile photo"
-            className="h-20 w-20 rounded-full object-cover"
+            className="h-24 w-24 rounded-full object-cover"
           />
         ) : (
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-neutral-800 text-xl text-white">
+          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-neutral-800 text-2xl text-white">
             {initialLetter}
           </div>
         )}
-        <label className="mt-2 cursor-pointer text-sm text-white">
+        <label className="mt-3 cursor-pointer rounded-full bg-neutral-800 px-4 py-1.5 text-sm text-white">
           Edit picture
           <input
             type="file"
@@ -84,7 +84,7 @@ function EditForm({
           />
         </label>
       </div>
-      <div className="mt-6 divide-y divide-neutral-800 border-y border-neutral-800">
+      <div className="-mx-3 mt-4 divide-y divide-neutral-800 border-y border-neutral-800 px-3">
         <label className="flex items-center gap-3 py-3">
           <span className="w-24 shrink-0 text-sm text-neutral-500">Name</span>
           <input
@@ -110,10 +110,16 @@ function EditForm({
       <button
         onClick={save}
         disabled={saving}
-        className="mt-4 w-full rounded bg-neutral-100 px-3 py-1.5 text-sm text-black disabled:opacity-50"
+        className="mt-5 w-full rounded-full bg-white px-3 py-1.5 text-base text-black disabled:opacity-50"
       >
         Save
       </button>
+      <Link
+        to="/profile"
+        className="mt-2 block w-full rounded-full bg-neutral-800 px-3 py-1.5 text-center text-base text-white"
+      >
+        Cancel
+      </Link>
     </>
   );
 }
@@ -122,18 +128,11 @@ export function EditProfilePage() {
   const me = useQuery(api.users.me);
 
   return (
-    <main className="mx-auto max-w-2xl px-3 py-6">
-      <div className="flex items-center justify-between">
-        <Link to="/profile" className="text-sm text-neutral-400">
-          Cancel
-        </Link>
-        <p className="text-sm font-medium text-white">Edit profile</p>
-        <span className="w-12" />
-      </div>
+    <main className="mx-auto max-w-2xl px-3">
       {me === undefined ? (
-        <p className="mt-6 text-sm text-neutral-500">Loading...</p>
+        <p className="mt-6 text-center text-sm text-neutral-500">Loading...</p>
       ) : me === null ? (
-        <p className="mt-6 text-sm text-neutral-500">Sign in to edit.</p>
+        <p className="mt-6 text-center text-sm text-neutral-500">Sign in to edit.</p>
       ) : (
         <EditForm initial={me} />
       )}

@@ -1,61 +1,66 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { useUIStore } from "../../../store";
-
-function MenuIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path d="M3 5h14M3 10h14M3 15h14" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <circle cx="9" cy="9" r="5.5" />
-      <path d="M13.5 13.5 17 17" strokeLinecap="round" />
-    </svg>
-  );
-}
+import { useTopBarStreak, useTopBarVariant } from "./useTopBar";
 
 export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const searchQuery = useUIStore((s) => s.searchQuery);
   const setSearchQuery = useUIStore((s) => s.setSearchQuery);
+  const variant = useTopBarVariant();
+  const streak = useTopBarStreak();
 
   return (
-    <header className="border-b border-neutral-800 bg-[#101010]">
-      <div className="flex items-center justify-between px-3 py-3">
-        <button
-          onClick={onMenuClick}
-          aria-label="Menu"
-          className="text-neutral-300 hover:text-white"
-        >
-          <MenuIcon />
-        </button>
-        <Link to="/home" aria-label="knots home">
-          <img src="/knots-wordmark.svg" alt="knots" className="h-4 w-auto" />
+    <header className="bg-[#101010]">
+      <div className="flex items-center justify-between px-4 pb-4 pt-6">
+        {variant === "profile" ? (
+          <button aria-label="Streak" className="flex items-center gap-1 text-neutral-300 hover:text-white">
+            <img src="/MajesticonsFireLine.svg" alt="" className="h-7 w-7 invert opacity-70" />
+            {streak !== undefined && (
+              <span className="text-base text-white opacity-70">{streak}</span>
+            )}
+          </button>
+        ) : (
+          <button
+            onClick={onMenuClick}
+            aria-label="Menu"
+            className="text-neutral-300 hover:text-white"
+          >
+            <img src="/MajesticonsMenuAlt.svg" alt="" className="h-6 w-6 invert scale-y-[0.85]" />
+          </button>
+        )}
+        <Link to="/home" aria-label="knots home" className="hidden">
+          <img src="/knots-wordmark.svg" alt="knots" className="h-6 w-auto" />
         </Link>
-        <button
-          onClick={() => setSearchOpen((v) => !v)}
-          aria-label="Search"
-          className="text-neutral-300 hover:text-white"
-        >
-          <SearchIcon />
-        </button>
-      </div>
-      {searchOpen && (
-        <div className="border-t border-neutral-800 px-3 py-2">
+        {variant === "profile" ? (
+          <button aria-label="Settings" className="text-neutral-300 hover:text-white">
+            <img src="/MajesticonsCogLine.svg" alt="" className="h-7 w-7 invert opacity-70" />
+          </button>
+        ) : searchOpen ? (
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onBlur={() => {
+              if (!searchQuery.trim()) setSearchOpen(false);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setSearchOpen(false);
+            }}
             placeholder="Search"
             autoFocus
-            className="w-full rounded border border-neutral-800 bg-neutral-950 px-2 py-1 text-sm text-white"
+            aria-label="Search"
+            className="w-full bg-transparent text-right text-sm text-white outline-none"
           />
-        </div>
-      )}
+        ) : (
+          <button
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search"
+            className="text-neutral-300 hover:text-white"
+          >
+            <img src="/MajesticonsSearchLine.svg" alt="" className="h-7 w-7 invert opacity-70" />
+          </button>
+        )}
+      </div>
     </header>
   );
 }

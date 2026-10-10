@@ -27,21 +27,26 @@ function PostDetails({ postId }: { postId: string }) {
   const { user } = useUser();
 
   if (post === undefined) {
-    return <p className="mt-6 text-sm text-neutral-500">Loading...</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Loading...</p>;
   }
   if (post === null) {
-    return <p className="mt-6 text-sm text-neutral-500">Not found.</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Not found.</p>;
   }
 
   return (
-    <div className="mt-6">
+    <div>
       <div className="flex justify-end">
         {post.authorId === user?.id && (
           <Link
             to={`/post/${post._id}/edit`}
-            className="text-sm text-neutral-500 underline"
+            aria-label="Edit"
+            className="group"
           >
-            Edit
+            <img
+              src="/MajesticonsDotsHorizontal.svg"
+              alt=""
+              className="h-5 w-5 invert opacity-40 group-hover:opacity-100"
+            />
           </Link>
         )}
       </div>
@@ -63,12 +68,12 @@ function PostDetails({ postId }: { postId: string }) {
       {post.knotJoinable && !post.isMember && (
         <button
           onClick={() => joinKnot({ knotId: post.knotId })}
-          className="mt-4 text-sm text-white underline"
+          className="mt-4 w-full rounded-full bg-neutral-800 px-4 py-1.5 text-base text-white"
         >
           Join this knot
         </button>
       )}
-      <div className="mt-4 border-t border-neutral-800 pt-2">
+      <div className="mt-2 pt-2">
         <form
           onSubmit={async (e) => {
             e.preventDefault();
@@ -95,16 +100,24 @@ function PostDetails({ postId }: { postId: string }) {
               setCommentPhoto(null);
             });
           }}
-          className="flex gap-2"
+          className="flex items-center gap-1 rounded-full bg-neutral-900 py-1.5 pl-3 pr-1.5"
         >
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Add a comment"
-            className="w-full rounded-full border border-neutral-800 bg-neutral-950 px-3 py-1.5 text-sm text-white"
+            className="w-full bg-transparent text-sm text-white outline-none"
           />
-          <label className="shrink-0 cursor-pointer px-1 py-1.5 text-sm text-neutral-400">
-            {commentPhoto ? "1 photo" : "Photo"}
+          <label className="group flex shrink-0 cursor-pointer items-center gap-1 px-1 py-1.5 text-sm text-neutral-400">
+            {commentPhoto ? (
+              "1 photo"
+            ) : (
+              <img
+                src="/MajesticonsAttachment.svg"
+                alt=""
+                className="h-5 w-5 invert opacity-40 group-hover:opacity-100"
+              />
+            )}
             <input
               type="file"
               accept="image/*"
@@ -114,14 +127,19 @@ function PostDetails({ postId }: { postId: string }) {
           </label>
           <button
             type="submit"
-            className="shrink-0 rounded-full bg-neutral-100 px-4 py-1.5 text-sm text-black"
+            aria-label="Post"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-black"
           >
-            Post
+            <img
+              src="/MajesticonsPaperAirplaneLine.svg"
+              alt=""
+              className="h-5 w-5"
+            />
           </button>
         </form>
-        <ul className="mt-2 space-y-3">
+        <ul className="mt-4 space-y-3">
           {(comments ?? []).map((c) => (
-            <li key={c._id} className="flex gap-2">
+            <li key={c._id} className="flex gap-3">
               {c.authorAvatar ? (
                 <img
                   src={c.authorAvatar}
@@ -146,7 +164,7 @@ function PostDetails({ postId }: { postId: string }) {
                   </span>
                 </p>
                 {c.text && (
-                  <p className="mt-0.5 text-sm text-neutral-200">{c.text}</p>
+                  <p className="mt-1 text-sm text-neutral-200">{c.text}</p>
                 )}
                 {c.imageUrl && (
                   <img
@@ -158,7 +176,7 @@ function PostDetails({ postId }: { postId: string }) {
                 {c.authorId === user?.id && (
                   <button
                     onClick={() => removeComment({ commentId: c._id })}
-                    className="mt-0.5 text-xs text-neutral-600 underline"
+                    className="mt-1 text-xs text-neutral-600"
                   >
                     Delete
                   </button>
@@ -176,7 +194,7 @@ export function PostPage() {
   const { postId = "" } = useParams();
 
   return (
-    <main className="mx-auto max-w-2xl px-3 py-6">
+    <main className="mx-auto max-w-2xl px-3">
       {!clerkConfigured ? (
         <p className="mt-2 text-sm text-neutral-500">
           Auth off. Add VITE_CLERK_PUBLISHABLE_KEY to sign in.

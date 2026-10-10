@@ -54,6 +54,20 @@ export const checkin = mutation({
       .filter((q) => q.eq(q.field("userId"), userId))
       .unique();
     if (!row) throw new Error("Only knot members can check in.");
+    const now = Date.now();
+    const startOfDay = Date.UTC(
+      new Date(now).getUTCFullYear(),
+      new Date(now).getUTCMonth(),
+      new Date(now).getUTCDate(),
+    );
+    const todays = await ctx.db
+      .query("checkins")
+      .withIndex("by_knot", (q) => q.eq("knotId", args.knotId))
+      .filter((q) => q.eq(q.field("userId"), userId))
+      .collect();
+    if (todays.some((c) => c._creationTime >= startOfDay)) {
+      throw new Error("Already checked in today.");
+    }
     const text = (args.text ?? "").trim();
     if (args.kind !== "tap" && !text && !args.imageStorageId) {
       throw new Error("Add a note or photo.");

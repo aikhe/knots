@@ -18,7 +18,7 @@ function Feed({ myId }: { myId?: string }) {
   const [rankedIds, setRankedIds] = useState<string[] | null>(null);
 
   if (feed === undefined) {
-    return <p className="mt-6 text-sm text-neutral-500">Loading...</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Loading...</p>;
   }
 
   const q = searchQuery.trim().toLowerCase();
@@ -37,7 +37,7 @@ function Feed({ myId }: { myId?: string }) {
 
   if (visible.length === 0) {
     return (
-      <p className="mt-6 text-sm text-neutral-500">
+      <p className="mt-6 text-center text-sm text-neutral-500">
         {smartActive ? "Nothing matches." : "Nothing here yet."}
       </p>
     );
@@ -48,7 +48,7 @@ function Feed({ myId }: { myId?: string }) {
       {q !== "" && (
         <SmartFeedRank query={searchQuery} onResult={setRankedIds} />
       )}
-      <ul className="mt-2">
+      <ul>
       {visible.map((p) => (
         <PostItem
           key={p._id}
@@ -118,9 +118,25 @@ function AuthedFeed() {
   return <Feed myId={user?.id} />;
 }
 
+function StartCard() {
+  const knots = useQuery(api.knots.mine);
+  if (knots === undefined || knots.length > 0) return null;
+  return (
+    <Link
+      to="/welcome"
+      className="mt-2 block rounded-2xl bg-neutral-900 p-3"
+    >
+      <p className="text-base text-white">New here?</p>
+      <p className="mt-1 text-sm text-neutral-500">
+        Tie your first knot in under a minute.
+      </p>
+    </Link>
+  );
+}
+
 export function HomePage() {
   return (
-    <main className="mx-auto max-w-2xl px-3 py-6">
+    <main className="mx-auto max-w-2xl px-3">
       {!clerkConfigured && (
         <p className="mt-2 text-sm text-neutral-500">
           Auth off. Add VITE_CLERK_PUBLISHABLE_KEY to sign in.
@@ -155,6 +171,7 @@ export function HomePage() {
         <Feed />
       ) : (
         <SignedIn>
+          <StartCard />
           <AuthedFeed />
         </SignedIn>
       )}

@@ -15,10 +15,10 @@ function JoinDetails({ token }: { token: string }) {
   const [error, setError] = useState<string | null>(null);
 
   if (preview === undefined) {
-    return <p className="mt-6 text-sm text-neutral-500">Loading...</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Loading...</p>;
   }
   if (preview === null) {
-    return <p className="mt-6 text-sm text-neutral-500">Invite not found.</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Invite not found.</p>;
   }
 
   async function accept() {
@@ -65,7 +65,7 @@ export function JoinPage() {
     <main className="mx-auto max-w-2xl px-3 py-6">
       <h1 className="text-xl font-medium text-white">Invite</h1>
       {!clerkConfigured ? (
-        <p className="mt-6 text-sm text-neutral-500">
+        <p className="mt-6 text-center text-sm text-neutral-500">
           Auth off. Add VITE_CLERK_PUBLISHABLE_KEY to sign in.
         </p>
       ) : (

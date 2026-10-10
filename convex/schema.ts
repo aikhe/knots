@@ -7,6 +7,7 @@ export default defineSchema({
     username: v.string(),
     displayName: v.optional(v.string()),
     avatarStorageId: v.optional(v.id("_storage")),
+    mascot: v.optional(v.string()),
   })
     .index("by_user", ["userId"])
     .index("by_username", ["username"]),
@@ -14,6 +15,7 @@ export default defineSchema({
   knots: defineTable({
     title: v.string(),
     creatorId: v.string(),
+    background: v.optional(v.string()),
     inviteToken: v.optional(v.string()),
     kind: v.union(
       v.literal("solo"),

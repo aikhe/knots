@@ -39,6 +39,7 @@ function KnotForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
   const titleRef = useDeferredFocus<HTMLInputElement>(ready);
   const [title, setTitle] = useState("");
   const [kind, setKind] = useState<KnotKind>("tied");
+  const [background, setBackground] = useState<string | undefined>(undefined);
   const [memberIds, setMemberIds] = useState<
     { userId: string; username: string; displayName: string }[]
   >([]);
@@ -52,6 +53,7 @@ function KnotForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
         title,
         kind,
         joinable: false,
+        background,
         memberUserIds: memberIds.map((m) => m.userId),
       });
       onDone();
@@ -61,19 +63,21 @@ function KnotForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-3">
+    <form onSubmit={onSubmit} className="flex flex-1 flex-col gap-3">
       <KnotFields
         title={title}
         setTitle={setTitle}
         kind={kind}
         setKind={setKind}
+        background={background}
+        setBackground={setBackground}
         memberIds={memberIds}
         setMemberIds={setMemberIds}
         titleRef={titleRef}
       />
       <button
         type="submit"
-        className="w-full rounded bg-neutral-100 px-3 py-1.5 text-sm text-black"
+        className="mt-auto w-full rounded-full bg-white px-3 py-1.5 text-base text-black"
       >
         Make knot
       </button>
@@ -96,11 +100,13 @@ function PostForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
   const [makingKnot, setMakingKnot] = useState(false);
   const [title, setTitle] = useState("");
   const [kind, setKind] = useState<KnotKind>("tied");
+  const [background, setBackground] = useState<string | undefined>(undefined);
   const [isPublic, setIsPublic] = useState(false);
   const [joinable, setJoinable] = useState(false);
   const [memberIds, setMemberIds] = useState<
     { userId: string; username: string; displayName: string }[]
   >([]);
+  const [knotListOpen, setKnotListOpen] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -111,9 +117,11 @@ function PostForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
   function reset() {
     setText("");
     setKnotId("");
+    setKnotListOpen(false);
     setMakingKnot(false);
     setTitle("");
     setKind("tied");
+    setBackground(undefined);
     setIsPublic(false);
     setJoinable(false);
     setMemberIds([]);
@@ -132,6 +140,7 @@ function PostForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
           title,
           kind,
           joinable,
+          background,
           memberUserIds: memberIds.map((m) => m.userId),
         });
       }
@@ -170,16 +179,16 @@ function PostForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-3">
+    <form onSubmit={onSubmit} className="flex flex-1 flex-col gap-3">
       <textarea
         ref={textRef}
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder="Share an update"
         rows={3}
-        className="w-full rounded border border-neutral-800 bg-neutral-950 px-2 py-1 text-sm text-white"
+        className="min-h-24 w-full flex-1 resize-none bg-transparent py-2 text-base text-white outline-none"
       />
-      <label className="block cursor-pointer text-sm text-neutral-400">
+      <label className="block w-full cursor-pointer rounded-full bg-neutral-800 px-4 py-2 text-center text-sm text-white">
         {photos.length > 0 ? `${photos.length} photos` : "Add photos"}
         <input
           type="file"
@@ -211,66 +220,96 @@ function PostForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
       )}
       {!makingKnot ? (
         <div className="flex gap-2">
-          <select
-            value={knotId}
-            onChange={(e) => setKnotId(e.target.value)}
-            className="w-full rounded border border-neutral-800 bg-neutral-950 px-2 py-1 text-sm text-white"
-          >
-            <option value="">Pick a knot</option>
-            {(myKnots ?? []).map((k) => (
-              <option key={k._id} value={k._id}>
-                {k.title}
-              </option>
-            ))}
-          </select>
+          <div className="relative w-full">
+            <button
+              type="button"
+              onClick={() => setKnotListOpen((v) => !v)}
+              aria-expanded={knotListOpen}
+              className="flex w-full items-center justify-between gap-2 rounded-full bg-neutral-800 py-2 pl-4 pr-4 text-base text-white"
+            >
+              <span className="truncate">
+                {picked?.title ?? "Pick a knot"}
+              </span>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                aria-hidden
+                className={`shrink-0 text-neutral-500 transition-transform ${knotListOpen ? "rotate-180" : ""}`}
+              >
+                <path
+                  d="M6 9l6 6 6-6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            {knotListOpen && (
+              <ul className="absolute inset-x-0 top-full z-10 mt-1 rounded-2xl bg-neutral-900 p-1">
+                {(myKnots ?? []).map((k) => (
+                  <li key={k._id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setKnotId(k._id);
+                        setKnotListOpen(false);
+                      }}
+                      className={`w-full truncate rounded-xl px-3 py-2 text-left text-sm ${k._id === knotId ? "bg-neutral-800 text-white" : "text-neutral-400"}`}
+                    >
+                      {k.title}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => setMakingKnot(true)}
-            className="shrink-0 rounded border border-neutral-700 px-3 py-1 text-sm text-white"
+            className="shrink-0 rounded-full bg-neutral-800 px-4 py-2 text-sm text-white"
           >
             New
           </button>
         </div>
       ) : (
-        <div className="space-y-2 rounded border border-neutral-800 p-2">
+        <div className="space-y-2">
           <KnotFields
             title={title}
             setTitle={setTitle}
             kind={kind}
             setKind={setKind}
+            background={background}
+            setBackground={setBackground}
             memberIds={memberIds}
             setMemberIds={setMemberIds}
           />
           <button
             type="button"
             onClick={() => setMakingKnot(false)}
-            className="text-sm text-neutral-500 underline"
+            className="text-sm text-neutral-500"
           >
             Pick existing instead
           </button>
         </div>
       )}
-      <label className="flex items-center gap-2 text-sm text-neutral-400">
-        <input
-          type="checkbox"
-          checked={isPublic}
-          onChange={(e) => setIsPublic(e.target.checked)}
-        />
-        Post publicly
-      </label>
+      <Switch
+        checked={isPublic}
+        onChange={setIsPublic}
+        label="Post publicly"
+      />
       {canFlipJoinable && (
-        <label className="flex items-center gap-2 text-sm text-neutral-400">
-          <input
-            type="checkbox"
-            checked={joinable}
-            onChange={(e) => setJoinable(e.target.checked)}
-          />
-          Joinable by others
-        </label>
+        <Switch
+          checked={joinable}
+          onChange={setJoinable}
+          label="Joinable by others"
+        />
       )}
       <button
         type="submit"
-        className="w-full rounded bg-neutral-100 px-3 py-1.5 text-sm text-black"
+        className="mt-auto w-full rounded-full bg-white px-3 py-1.5 text-base text-black"
       >
         Post
       </button>
@@ -283,6 +322,36 @@ function PostForm({ onDone, ready }: { onDone: () => void; ready: boolean }) {
         </p>
       )}
     </form>
+  );
+}
+
+function Switch({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className="flex w-full items-center justify-between py-1 pl-1"
+    >
+      <span className="text-sm text-neutral-400">{label}</span>
+      <span
+        className={`flex h-6 w-11 items-center rounded-full px-0.5 transition-colors ${checked ? "justify-end bg-white" : "justify-start bg-neutral-800"}`}
+      >
+        <span
+          className={`h-5 w-5 rounded-full ${checked ? "bg-black" : "bg-neutral-500"}`}
+        />
+      </span>
+    </button>
   );
 }
 
@@ -351,7 +420,7 @@ export function ComposerSheet() {
           onDragEnd={(_, info) => {
             if (info.offset.y > 100 || info.velocity.y > 500) close();
           }}
-          className="absolute inset-x-0 bottom-0 z-20 rounded-t-3xl border-x border-t border-neutral-800 bg-[#101010] shadow-[0_-12px_48px_rgba(0,0,0,0.7)]"
+          className="absolute inset-x-0 bottom-0 z-20 flex h-[60%] flex-col rounded-t-3xl bg-[#101010]"
         >
           <div
             onPointerDown={(e) => dragControls.start(e)}
@@ -359,7 +428,7 @@ export function ComposerSheet() {
           >
             <div className="mx-auto h-1 w-10 rounded-full bg-neutral-700" />
           </div>
-          <div className="max-h-[82dvh] overflow-y-auto overscroll-contain px-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-2">
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-2">
             {!clerkConfigured ? (
               <p className="text-sm text-neutral-500">
                 Auth off. Add VITE_CLERK_PUBLISHABLE_KEY to post.

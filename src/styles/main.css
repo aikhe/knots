@@ -17,3 +17,13 @@ body {
   font-weight: var(--font-weight-body);
   letter-spacing: var(--letter-spacing-body);
 }
+
+button:not(:disabled) {
+  cursor: pointer;
+  transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+}
+
+button:not(:disabled):active {
+  transform: scale(0.96);
+  opacity: 0.85;
+}

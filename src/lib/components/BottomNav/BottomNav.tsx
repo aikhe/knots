@@ -1,31 +1,73 @@
 import { NavLink, useLocation } from "react-router";
+import type { ComponentType } from "react";
 import { useUIStore } from "../../../store";
 
-const tabs = [
-  { to: "/home", label: "Home" },
-  { to: "/knots", label: "Knots" },
-];
+function HomeGlyph({ active }: { active?: boolean }) {
+  return (
+    <img
+      src="/home.svg"
+      alt=""
+      className={`h-[18px] w-[18px] invert ${active ? "" : "opacity-40"}`}
+    />
+  );
+}
 
-const tabsRight = [
-  { to: "/info", label: "Info" },
-  { to: "/profile", label: "Profile" },
+function KnotGlyph({ active }: { active?: boolean }) {
+  return (
+    <img
+      src="/knot.svg"
+      alt=""
+      className={`h-[22px] w-auto ${active ? "" : "opacity-40"}`}
+    />
+  );
+}
+
+function ApplicationsGlyph({ active }: { active?: boolean }) {
+  return (
+    <img
+      src="/MajesticonsApplications.svg"
+      alt=""
+      className={`h-6 w-6 invert ${active ? "" : "opacity-40"}`}
+    />
+  );
+}
+
+function UserGlyph({ active }: { active?: boolean }) {
+  return (
+    <img
+      src="/MajesticonsUser.svg"
+      alt=""
+      className={`h-6 w-6 invert ${active ? "" : "opacity-40"}`}
+    />
+  );
+}
+
+// pill dock with separate circular action, per reference layout
+const tabs = [
+  { to: "/home", label: "Home", Icon: HomeGlyph },
+  { to: "/knots", label: "Knots", Icon: KnotGlyph },
+  { to: "/info", label: "Info", Icon: ApplicationsGlyph },
+  { to: "/profile", label: "Profile", Icon: UserGlyph },
 ];
 
 function Tab({
   to,
   label,
+  Icon,
 }: {
   to: string;
   label: string;
+  Icon: ComponentType<{ active?: boolean }>;
 }) {
   return (
     <NavLink
       to={to}
+      aria-label={label}
       className={({ isActive }) =>
-        `block py-3 text-center text-sm ${isActive ? "text-white" : "text-neutral-500"}`
+        `flex h-14 w-16 items-center justify-center rounded-full ${isActive ? "bg-neutral-700 text-white" : "text-neutral-500"}`
       }
     >
-      {label}
+      {({ isActive }) => <Icon active={isActive} />}
     </NavLink>
   );
 }
@@ -36,37 +78,28 @@ export function BottomNav() {
   const location = useLocation();
 
   return (
-    <nav className="border-t border-neutral-800 bg-[#101010]">
-      <ul className="flex items-center">
-        {tabs.map((tab) => (
-          <li key={tab.to} className="flex-1">
-            <Tab to={tab.to} label={tab.label} />
-          </li>
-        ))}
-        <li className="flex-1">
-          <div className="flex justify-center">
-            <button
-              onClick={() => {
-                setComposerMode(
-                  location.pathname.startsWith("/knots") ? "knot" : "post",
-                );
-                setComposerOpen(true);
-              }}
-              aria-label="Add"
-              className="-mt-5 flex h-12 w-12 items-center justify-center rounded-full bg-white text-black"
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M10 4v12M4 10h12" strokeLinecap="round" />
-              </svg>
-            </button>
-          </div>
-        </li>
-        {tabsRight.map((tab) => (
-          <li key={tab.to} className="flex-1">
-            <Tab to={tab.to} label={tab.label} />
-          </li>
-        ))}
-      </ul>
+    <nav className="bg-transparent px-2 pt-2 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <div className="flex items-center justify-center gap-2">
+        <ul className="flex items-center justify-center rounded-full bg-neutral-800">
+          {tabs.map((tab) => (
+            <li key={tab.to}>
+              <Tab to={tab.to} label={tab.label} Icon={tab.Icon} />
+            </li>
+          ))}
+        </ul>
+        <button
+          onClick={() => {
+            setComposerMode(
+              location.pathname.startsWith("/knots") ? "knot" : "post",
+            );
+            setComposerOpen(true);
+          }}
+          aria-label="Add"
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white text-black"
+        >
+          <img src="/plus.svg" alt="" className="h-5 w-5 invert" />
+        </button>
+      </div>
     </nav>
   );
 }

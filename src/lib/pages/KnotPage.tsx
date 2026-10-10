@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { SignedIn, SignedOut, useUser } from "@clerk/clerk-react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -11,10 +11,19 @@ const clerkConfigured = Boolean(
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
 );
 
-function CheckIn({ knotId }: { knotId: string }) {
+function CheckIn({
+  knotId,
+  resting,
+  tuggable,
+  onTug,
+}: {
+  knotId: string;
+  resting: boolean;
+  tuggable: { userId: string; displayName: string }[];
+  onTug: (userId: string) => void;
+}) {
   const checkin = useMutation(api.checkins.checkin);
-  const generateUrl = useMutation(api.checkins.generateUploadUrl);
-  const [note, setNote] = useState("");
+  const setRest = useMutation(api.knots.setRest);
   const [error, setError] = useState<string | null>(null);
 
   async function tap() {
@@ -26,71 +35,35 @@ function CheckIn({ knotId }: { knotId: string }) {
     }
   }
 
-  async function sendNote(e: FormEvent) {
-    e.preventDefault();
-    if (!note.trim()) return;
-    setError(null);
-    try {
-      await checkin({
-        knotId: knotId as Id<"knots">,
-        kind: "note",
-        text: note,
-      });
-      setNote("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not check in.");
-    }
-  }
-
-  async function sendPhoto(file: File | null) {
-    if (!file) return;
-    setError(null);
-    try {
-      const url = await generateUrl();
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      const { storageId } = (await res.json()) as { storageId: string };
-      await checkin({
-        knotId: knotId as Id<"knots">,
-        kind: "photo",
-        imageStorageId: storageId as Id<"_storage">,
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not check in.");
-    }
-  }
-
   return (
-    <div className="border-b border-neutral-800 px-3 py-2">
-      <div className="flex gap-2">
+    <div className="px-3 py-2">
+      <div className="flex items-center gap-2">
         <button
           onClick={tap}
-          className="shrink-0 rounded-full bg-neutral-100 px-4 py-1.5 text-sm text-black"
+          className="flex-1 rounded-full bg-neutral-800 px-4 py-2 text-center text-sm text-white"
         >
           Check in
         </button>
-        <form onSubmit={sendNote} className="flex w-full gap-2">
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Note"
-            className="w-full rounded-full border border-neutral-800 bg-neutral-950 px-3 py-1.5 text-sm text-white"
-          />
-        </form>
-        <label className="shrink-0 cursor-pointer rounded-full border border-neutral-700 px-3 py-1.5 text-sm text-white">
-          Photo
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => sendPhoto(e.target.files?.[0] ?? null)}
-          />
-        </label>
+        {tuggable.map((t) => (
+          <button
+            key={t.userId}
+            onClick={() => onTug(t.userId)}
+            aria-label={`Tug ${t.displayName}`}
+            className="flex-1 rounded-full bg-neutral-800 px-4 py-2 text-center text-sm text-white"
+          >
+            tug
+          </button>
+        ))}
+        <button
+          onClick={() => setRest({ knotId: knotId as Id<"knots">, resting: !resting })}
+          className="flex-1 rounded-full bg-neutral-800 px-4 py-2 text-center text-sm text-white"
+        >
+          {resting ? "Resume" : "Rest"}
+        </button>
       </div>
-      {error && <p className="mt-1 text-sm text-neutral-500">{error}</p>}
+      {error && (
+        <p className="mt-1 text-center text-sm text-neutral-500">{error}</p>
+      )}
     </div>
   );
 }
@@ -102,7 +75,6 @@ function Chat({
   knotId: string;
   myId: string;
 }) {
-  const navigate = useNavigate();
   const knot = useQuery(api.knots.get, {
     knotId: knotId as Id<"knots">,
   });
@@ -114,13 +86,10 @@ function Chat({
   });
   const sendMessage = useMutation(api.messages.send);
   const joinKnot = useMutation(api.knots.join);
-  const setRest = useMutation(api.knots.setRest);
   const sendTug = useMutation(api.tugs.send);
   const [text, setText] = useState("");
-  const [name, setName] = useState<string | null>(null);
-  const renameKnot = useMutation(api.knots.rename);
+  const [copied, setCopied] = useState(false);
   const removeMember = useMutation(api.knots.removeMember);
-  const deleteKnot = useMutation(api.knots.removeKnot);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -128,10 +97,10 @@ function Chat({
   }, [messages?.length]);
 
   if (knot === undefined || messages === undefined) {
-    return <p className="mt-6 text-sm text-neutral-500">Loading...</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Loading...</p>;
   }
   if (knot === null) {
-    return <p className="mt-6 text-sm text-neutral-500">Not found.</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Not found.</p>;
   }
 
   async function onSend(e: FormEvent) {
@@ -145,119 +114,125 @@ function Chat({
     });
   }
 
+  async function copyInvite() {
+    const token = knot?.inviteToken;
+    if (!token) return;
+    try {
+      await navigator.clipboard?.writeText(
+        `${window.location.origin}/join/${token}`,
+      );
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCopied(false);
+    }
+  }
+
   return (
-    <div className="flex h-full flex-col">
-      <div className="border-b border-neutral-800 px-3 py-3">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-white">{knot.title}</p>
-          <span className="text-xs text-neutral-500">{knot.kind}</span>
+    <div className="relative flex h-full flex-col">
+      {copied && (
+        <div className="absolute left-1/2 top-2 z-10 -translate-x-1/2 rounded-full bg-neutral-800 px-4 py-1.5 text-sm text-white">
+          Copied
         </div>
-        <div className="mt-2">
+      )}
+      <div className="px-3 py-3">
+        <div className="flex flex-col items-center">
+          <div className="relative">
+            {knot.background ? (
+              <img
+                src={knot.background}
+                alt=""
+                className="h-20 w-20 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-neutral-800 text-2xl text-white">
+                {knot.title.slice(0, 1).toUpperCase()}
+              </div>
+            )}
+            {knot.creatorId === myId && (
+              <Link
+                to={`/knot/${knot._id}/edit`}
+                aria-label="Knot settings"
+                className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-800"
+              >
+                <img
+                  src="/MajesticonsCogLine.svg"
+                  alt=""
+                  className="h-5 w-5 invert"
+                />
+              </Link>
+            )}
+          </div>
+          <p className="mt-2 text-center text-base text-white">{knot.title}</p>
+        </div>
+        <div className="mx-auto mt-2 w-4/5">
           <RopeMeter rope={knot.rope} />
         </div>
         {stats && (
-          <p className="mt-1 text-xs text-neutral-500">
+          <p className="mt-3 text-center text-sm text-neutral-500">
             {stats.totalCheckins} check-ins · {stats.activeToday} active today
           </p>
         )}
         {knot.isMember && !knot.resting && knot.rope === "slack" && (
-          <p className="mt-2 rounded-xl bg-neutral-900 px-3 py-2 text-xs text-neutral-300">
+          <p className="mt-2 rounded-2xl bg-neutral-900 px-3 py-2 text-center text-sm text-neutral-300">
             Stuck? Rest it for a breather, tug a member, or trim the goal.
           </p>
         )}
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          {knot.members.map((m) => (
-            <span key={m.userId} className="flex items-center gap-1 text-xs text-neutral-400">
-              <Link to={`/user/${m.username}`} className="underline">
-                {m.displayName}
+        <div className="mt-3 flex items-center justify-center">
+          <div className="flex -space-x-2">
+            {knot.members.map((m) => (
+              <Link
+                key={m.userId}
+                to={`/user/${m.username}`}
+                aria-label={m.displayName}
+                title={m.displayName}
+              >
+                {m.avatarUrl ? (
+                  <img
+                    src={m.avatarUrl}
+                    alt={m.displayName}
+                    className="h-9 w-9 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-neutral-800 text-sm text-white">
+                    {m.displayName.slice(0, 1).toUpperCase()}
+                  </div>
+                )}
               </Link>
-              {m.userId !== myId && knot.isMember && (
-                <button
-                  onClick={() =>
-                    sendTug({ knotId: knot._id, toUserId: m.userId })
-                  }
-                  className="text-neutral-500 underline hover:text-white"
-                >
-                  tug
-                </button>
-              )}
-              {knot.creatorId === myId && m.userId !== myId && (
-                <button
-                  onClick={() =>
-                    removeMember({ knotId: knot._id, userId: m.userId })
-                  }
-                  className="text-neutral-600 underline"
-                >
-                  remove
-                </button>
-              )}
-            </span>
-          ))}
+            ))}
+            {knot.isMember && knot.inviteToken && (
+              <button
+                onClick={copyInvite}
+                aria-label="Copy invite link"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-neutral-800"
+              >
+                <img
+                  src="/plus.svg"
+                  alt=""
+                  className="h-3.5 w-3.5 opacity-70"
+                />
+              </button>
+            )}
+          </div>
         </div>
-        {knot.creatorId === myId && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (name !== null && name.trim()) {
-                renameKnot({ knotId: knot._id, title: name }).then(() =>
-                  setName(null),
-                );
-              }
-            }}
-            className="mt-2 flex gap-2"
-          >
-            <input
-              value={name ?? knot.title}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full rounded border border-neutral-800 bg-neutral-950 px-2 py-1 text-xs text-white"
-            />
-            <button
-              type="submit"
-              className="shrink-0 text-xs text-white underline"
-            >
-              Rename
-            </button>
-          </form>
-        )}
-        {knot.creatorId === myId && (
-          <button
-            onClick={() => {
-              if (window.confirm(`Delete ${knot.title}?`)) {
-                deleteKnot({ knotId: knot._id }).then(() =>
-                  navigate("/knots"),
-                );
-              }
-            }}
-            className="mt-2 text-xs text-neutral-500 underline"
-          >
-            Delete knot
-          </button>
-        )}
-        {knot.isMember && (
-          <button
-            onClick={() => setRest({ knotId: knot._id, resting: !knot.resting })}
-            className="mt-2 text-xs text-neutral-500 underline"
-          >
-            {knot.resting ? "Resume" : "Rest"}
-          </button>
-        )}
-        {knot.isMember && knot.inviteToken && (
-          <p className="mt-2 text-xs text-neutral-500">
-            Invite:{" "}
-            <button
-              onClick={() =>
-                navigator.clipboard
-                  ?.writeText(
-                    `${window.location.origin}/join/${knot.inviteToken}`,
-                  )
-                  .catch(() => {})
-              }
-              className="underline"
-            >
-              copy link
-            </button>
-          </p>
-        )}
+        {knot.creatorId === myId &&
+          knot.members.some((m) => m.userId !== myId) && (
+            <div className="mt-1 flex flex-wrap items-center justify-center gap-3">
+              {knot.members
+                .filter((m) => m.userId !== myId)
+                .map((m) => (
+                  <button
+                    key={m.userId}
+                    onClick={() =>
+                      removeMember({ knotId: knot._id, userId: m.userId })
+                    }
+                    className="text-xs text-neutral-600"
+                  >
+                    remove {m.displayName}
+                  </button>
+                ))}
+            </div>
+          )}
       </div>
       {!knot.isMember ? (
         <div className="px-3 py-6">
@@ -267,7 +242,7 @@ function Chat({
           {knot.joinable && (
             <button
               onClick={() => joinKnot({ knotId: knot._id })}
-              className="mt-2 text-sm text-white underline"
+              className="mt-4 w-full rounded-full bg-neutral-800 px-4 py-1.5 text-base text-white"
             >
               Join this knot
             </button>
@@ -275,21 +250,30 @@ function Chat({
         </div>
       ) : (
         <>
-          <CheckIn knotId={knotId} />
           <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
             {messages.length === 0 ? (
-              <p className="text-sm text-neutral-500">No messages yet.</p>
+              <p className="text-center text-sm text-neutral-500">No messages yet.</p>
             ) : (
               <ul className="space-y-2">
                 {messages.map((m) => {
                   const mine = m.authorId === myId;
+                  if (mine) {
+                    return (
+                      <li key={m._id} className="flex flex-col items-end gap-1">
+                        <div className="max-w-[80%] rounded-2xl bg-white px-3 py-1.5 text-black">
+                          <p className="text-sm">{m.text}</p>
+                        </div>
+                        <p className="text-[11px] text-neutral-500">
+                          {timeAgo(m._creationTime)}
+                        </p>
+                      </li>
+                    );
+                  }
                   return (
-                    <li
-                      key={m._id}
-                      className={`flex items-end gap-2 ${mine ? "justify-end" : "justify-start"}`}
-                    >
-                      {!mine &&
-                        (m.avatarUrl ? (
+                    <li key={m._id} className="flex flex-col gap-1">
+                      <p className="pl-8 text-xs text-neutral-400">{m.author}</p>
+                      <div className="flex items-end gap-2">
+                        {m.avatarUrl ? (
                           <img
                             src={m.avatarUrl}
                             alt={m.author}
@@ -299,24 +283,14 @@ function Chat({
                           <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-[11px] text-white">
                             {m.author.slice(0, 1).toUpperCase()}
                           </div>
-                        ))}
-                      <div
-                        className={`max-w-[80%] rounded-2xl px-3 py-1.5 ${
-                          mine
-                            ? "bg-neutral-100 text-black"
-                            : "bg-neutral-900 text-white"
-                        }`}
-                      >
-                        {!mine && (
-                          <p className="text-xs text-neutral-400">{m.author}</p>
                         )}
-                        <p className="text-sm">{m.text}</p>
-                        <p
-                          className={`mt-0.5 text-right text-[11px] ${mine ? "text-neutral-600" : "text-neutral-500"}`}
-                        >
-                          {timeAgo(m._creationTime)}
-                        </p>
+                        <div className="max-w-[80%] rounded-2xl bg-neutral-800 px-3 py-1.5 text-white">
+                          <p className="text-sm">{m.text}</p>
+                        </div>
                       </div>
+                      <p className="pl-8 text-[11px] text-neutral-500">
+                        {timeAgo(m._creationTime)}
+                      </p>
                     </li>
                   );
                 })}
@@ -324,21 +298,31 @@ function Chat({
             )}
             <div ref={bottomRef} />
           </div>
+          <CheckIn
+            knotId={knotId}
+            resting={knot.resting}
+            tuggable={knot.members
+              .filter((m) => m.userId !== myId)
+              .map((m) => ({ userId: m.userId, displayName: m.displayName }))}
+            onTug={(userId) => sendTug({ knotId: knot._id, toUserId: userId })}
+          />
           <form
             onSubmit={onSend}
-            className="flex gap-2 border-t border-neutral-800 px-3 py-2"
+            className="mx-3 mb-3 flex items-center gap-1 rounded-full bg-neutral-900 py-1.5 pl-3 pr-1.5"
           >
             <input
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Message"
-              className="w-full rounded-full border border-neutral-800 bg-neutral-950 px-3 py-1.5 text-sm text-white"
+              aria-label="Message"
+              className="w-full bg-transparent text-sm text-white outline-none"
             />
             <button
               type="submit"
-              className="shrink-0 rounded-full bg-neutral-100 px-4 py-1.5 text-sm text-black"
+              aria-label="Send"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-black"
             >
-              Send
+              <img src="/MajesticonsPaperAirplaneLine.svg" alt="" className="h-5 w-5" />
             </button>
           </form>
         </>

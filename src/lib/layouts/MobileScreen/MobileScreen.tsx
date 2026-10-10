@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Outlet } from "react-router";
 import { motion } from "motion/react";
 import { useMutation, useAction } from "convex/react";
@@ -40,6 +40,18 @@ function EnsureUser() {
       });
   }, [isLoaded, user, ensure, syncAvatar]);
   return null;
+}
+
+// Bare phone frame without bars or drawer, for fullscreen flows
+// like onboarding.
+export function BareScreen({ children }: { children: ReactNode }) {
+  return (
+    <div className="min-h-dvh bg-black sm:flex sm:items-center sm:justify-center sm:bg-white sm:py-6">
+      <div className="min-h-dvh w-full overflow-hidden bg-[#101010] sm:min-h-0 sm:h-[min(852px,calc(100dvh-3rem))] sm:w-[393px] sm:rounded-[2.5rem] sm:border sm:border-neutral-800 sm:overflow-y-auto">
+        {children}
+      </div>
+    </div>
+  );
 }
 
 // Phone-width column: full-bleed on small screens, centered framed

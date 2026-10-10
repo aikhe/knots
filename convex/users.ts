@@ -172,6 +172,7 @@ export const me = query({
     return {
       username: user.username,
       displayName: user.displayName ?? null,
+      mascot: user.mascot ?? null,
       avatarUrl: user.avatarStorageId
         ? await ctx.storage.getUrl(user.avatarStorageId)
         : null,
@@ -236,6 +237,21 @@ export const saveAvatar = mutation({
       await ctx.storage.delete(self.avatarStorageId);
     }
     await ctx.db.patch(self._id, { avatarStorageId: args.storageId });
+  },
+});
+
+export const setMascot = mutation({
+  args: { mascot: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
+    const mascot = args.mascot.trim().toLowerCase();
+    if (!mascot) throw new Error("Pick a mascot.");
+    const self = await ctx.db
+      .query("users")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
+    if (!self) throw new Error("Sign in to pick a mascot.");
+    await ctx.db.patch(self._id, { mascot });
   },
 });
 

@@ -2,7 +2,7 @@ import { mutation, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
-import { callerUserId, requireUserId, usernameOf, displayNameOf } from "./users";
+import { callerUserId, requireUserId, usernameOf, displayNameOf, avatarUrlOf } from "./users";
 import { knotScore, memberScore, ropeState } from "./knotScore";
 
 type Ctx = QueryCtx | MutationCtx;
@@ -25,6 +25,7 @@ export const create = mutation({
     title: v.string(),
     kind: v.union(v.literal("solo"), v.literal("tied"), v.literal("squad")),
     joinable: v.boolean(),
+    background: v.optional(v.string()),
     memberUserIds: v.array(v.string()),
   },
   handler: async (ctx, args) => {
@@ -46,6 +47,7 @@ export const create = mutation({
       creatorId: userId,
       kind: args.kind,
       joinable: args.kind !== "solo" && args.joinable,
+      background: args.background?.trim() || undefined,
       inviteToken: [...crypto.getRandomValues(new Uint8Array(16))]
         .map((b) => b.toString(16).padStart(2, "0"))
         .join(""),
@@ -91,6 +93,7 @@ export const mine = query({
         creatorId: knot.creatorId,
         kind: knot.kind,
         joinable: knot.joinable,
+        background: knot.background ?? null,
         memberCount: members.length,
         rope: ropeState(score),
         resting: m.resting === true,
@@ -140,6 +143,7 @@ export const browse = query({
         title: knot.title,
         creatorId: knot.creatorId,
         kind: knot.kind,
+        background: knot.background ?? null,
         memberCount: members.length,
         rope: ropeState(score),
         lastText: last?.text ?? null,
@@ -246,6 +250,46 @@ export const removeMember = mutation({
   },
 });
 
+async function destroyKnot(ctx: MutationCtx, knotId: Id<"knots">) {
+  const members = await ctx.db
+    .query("knot_members")
+    .withIndex("by_knot", (q) => q.eq("knotId", knotId))
+    .collect();
+  for (const m of members) await ctx.db.delete(m._id);
+  const messages = await ctx.db
+    .query("messages")
+    .withIndex("by_knot", (q) => q.eq("knotId", knotId))
+    .collect();
+  for (const m of messages) await ctx.db.delete(m._id);
+  const checkins = await ctx.db
+    .query("checkins")
+    .withIndex("by_knot", (q) => q.eq("knotId", knotId))
+    .collect();
+  for (const c of checkins) await ctx.db.delete(c._id);
+  const posts = await ctx.db
+    .query("posts")
+    .withIndex("by_knot", (q) => q.eq("knotId", knotId))
+    .collect();
+  for (const p of posts) {
+    const likes = await ctx.db
+      .query("likes")
+      .withIndex("by_post", (q) => q.eq("postId", p._id))
+      .collect();
+    for (const l of likes) await ctx.db.delete(l._id);
+    const comments = await ctx.db
+      .query("comments")
+      .withIndex("by_post", (q) => q.eq("postId", p._id))
+      .collect();
+    for (const c of comments) await ctx.db.delete(c._id);
+    await ctx.db.delete(p._id);
+  }
+  const tugs = await ctx.db.query("tugs").collect();
+  for (const t of tugs) {
+    if (t.knotId === knotId) await ctx.db.delete(t._id);
+  }
+  await ctx.db.delete(knotId);
+}
+
 export const removeKnot = mutation({
   args: { knotId: v.id("knots") },
   handler: async (ctx, args) => {
@@ -255,43 +299,30 @@ export const removeKnot = mutation({
     if (knot.creatorId !== userId) {
       throw new Error("Only the creator can delete this knot.");
     }
-    const members = await ctx.db
+    await destroyKnot(ctx, args.knotId);
+  },
+});
+
+// Dev-only: wipe the caller's knots and mascot so onboarding replays.
+export const resetOnboarding = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireUserId(ctx);
+    const mine = await ctx.db
+      .query("knots")
+      .withIndex("by_creator", (q) => q.eq("creatorId", userId))
+      .collect();
+    for (const knot of mine) await destroyKnot(ctx, knot._id);
+    const leftover = await ctx.db
       .query("knot_members")
-      .withIndex("by_knot", (q) => q.eq("knotId", args.knotId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
-    for (const m of members) await ctx.db.delete(m._id);
-    const messages = await ctx.db
-      .query("messages")
-      .withIndex("by_knot", (q) => q.eq("knotId", args.knotId))
-      .collect();
-    for (const m of messages) await ctx.db.delete(m._id);
-    const checkins = await ctx.db
-      .query("checkins")
-      .withIndex("by_knot", (q) => q.eq("knotId", args.knotId))
-      .collect();
-    for (const c of checkins) await ctx.db.delete(c._id);
-    const posts = await ctx.db
-      .query("posts")
-      .withIndex("by_knot", (q) => q.eq("knotId", args.knotId))
-      .collect();
-    for (const p of posts) {
-      const likes = await ctx.db
-        .query("likes")
-        .withIndex("by_post", (q) => q.eq("postId", p._id))
-        .collect();
-      for (const l of likes) await ctx.db.delete(l._id);
-      const comments = await ctx.db
-        .query("comments")
-        .withIndex("by_post", (q) => q.eq("postId", p._id))
-        .collect();
-      for (const c of comments) await ctx.db.delete(c._id);
-      await ctx.db.delete(p._id);
-    }
-    const tugs = await ctx.db.query("tugs").collect();
-    for (const t of tugs) {
-      if (t.knotId === args.knotId) await ctx.db.delete(t._id);
-    }
-    await ctx.db.delete(args.knotId);
+    for (const m of leftover) await ctx.db.delete(m._id);
+    const self = await ctx.db
+      .query("users")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
+    if (self) await ctx.db.patch(self._id, { mascot: undefined });
   },
 });
 
@@ -370,6 +401,7 @@ export const get = query({
         userId: row.userId,
         username: await usernameOf(ctx, row.userId),
         displayName: await displayNameOf(ctx, row.userId),
+        avatarUrl: await avatarUrlOf(ctx, row.userId),
       });
     }
     const knotMessages =
@@ -403,6 +435,7 @@ export const get = query({
       creatorId: knot.creatorId,
       kind: knot.kind,
       joinable: knot.joinable,
+      background: knot.background ?? null,
       isMember: member !== null,
       resting: member?.resting === true,
       rope: ropeState(score),

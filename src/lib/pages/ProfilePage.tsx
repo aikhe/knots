@@ -20,61 +20,56 @@ function ProfileDetails() {
   const name = me?.displayName ?? me?.username ?? "you";
 
   return (
-    <div className="mt-6">
-      <div className="flex items-center gap-3">
+    <div>
+      <div className="flex items-start gap-3 pt-2">
         {me?.avatarUrl ? (
           <img
             src={me.avatarUrl}
             alt={name}
-            className="h-10 w-10 rounded-full object-cover"
+            className="h-20 w-20 rounded-full object-cover"
           />
         ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-800 text-sm text-white">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-neutral-800 text-2xl text-white">
             {name.slice(0, 1).toUpperCase()}
           </div>
         )}
         <div>
-          <p className="text-sm text-white">{name}</p>
-          <p className="text-sm text-neutral-500">{me?.username}</p>
-          <p className="text-sm text-neutral-500">
-            {posts === undefined || knots === undefined
+          <p className="text-xl leading-tight text-white">{name}</p>
+          <p className="text-sm leading-tight text-white">{me?.username}</p>
+          <p className="mt-1 text-sm text-neutral-500">
+            {knots === undefined
               ? "Loading data..."
-              : `${knots.length} knots, ${posts.length} posts`}
+              : `${knots.length} ${knots.length === 1 ? "knot" : "knots"}${trust ? ` · ${trust.level}` : ""}`}
           </p>
-          {trust && (
-            <p className="text-sm text-neutral-500">
-              {trust.level} · {trust.streak}-day rhythm
-            </p>
-          )}
+          <p className="mt-1 text-sm text-neutral-500">
+            {friends === undefined ? (
+              "Loading friends..."
+            ) : (
+              <Link to="/profile/friends" className="text-neutral-500">
+                {`${friends.length} ${friends.length === 1 ? "friend" : "friends"}`}
+              </Link>
+            )}
+          </p>
         </div>
       </div>
-      <div className="mt-4 flex gap-4">
-        <Link to="/profile/edit" className="text-sm text-white underline">
-          Edit
+      <div className="mt-5 flex gap-2">
+        <Link
+          to="/profile/edit"
+          className="flex-1 rounded-full bg-neutral-800 px-4 py-1.5 text-center text-base text-white"
+        >
+          Edit profile
         </Link>
         <SignOutButton>
-          <button className="text-sm text-neutral-500 hover:text-white">
+          <button className="flex-1 rounded-full bg-neutral-800 px-4 py-1.5 text-base text-white">
             Sign out
           </button>
         </SignOutButton>
       </div>
-      <div className="mt-4">
-        {friends === undefined ? (
-          <p className="text-sm text-neutral-500">Loading friends...</p>
-        ) : (
-          <Link
-            to="/profile/friends"
-            className="text-sm text-neutral-500 underline"
-          >
-            {friends.length} {friends.length === 1 ? "friend" : "friends"}
-          </Link>
-        )}
-      </div>
-      <div className="mt-6 border-t border-neutral-800 pt-2">
+      <div className="mt-2 pt-2">
         {posts === undefined ? (
-          <p className="text-sm text-neutral-500">Loading...</p>
+          <p className="text-center text-sm text-neutral-500">Loading...</p>
         ) : posts.length === 0 ? (
-          <p className="text-sm text-neutral-500">No posts yet.</p>
+          <p className="text-center text-sm text-neutral-500">No posts yet.</p>
         ) : (
           <ul>
             {posts.map((p) => (
@@ -105,8 +100,7 @@ function ProfileDetails() {
 
 export function ProfilePage() {
   return (
-    <main className="mx-auto max-w-2xl px-3 py-6">
-      <h1 className="text-xl font-medium text-white">Profile</h1>
+    <main className="mx-auto max-w-2xl px-3">
       {!clerkConfigured ? (
         <p className="mt-6 text-sm text-neutral-500">
           Auth off. Add VITE_CLERK_PUBLISHABLE_KEY to sign in.
