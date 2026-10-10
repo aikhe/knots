@@ -250,6 +250,46 @@ export const removeMember = mutation({
   },
 });
 
+async function destroyKnot(ctx: MutationCtx, knotId: Id<"knots">) {
+  const members = await ctx.db
+    .query("knot_members")
+    .withIndex("by_knot", (q) => q.eq("knotId", knotId))
+    .collect();
+  for (const m of members) await ctx.db.delete(m._id);
+  const messages = await ctx.db
+    .query("messages")
+    .withIndex("by_knot", (q) => q.eq("knotId", knotId))
+    .collect();
+  for (const m of messages) await ctx.db.delete(m._id);
+  const checkins = await ctx.db
+    .query("checkins")
+    .withIndex("by_knot", (q) => q.eq("knotId", knotId))
+    .collect();
+  for (const c of checkins) await ctx.db.delete(c._id);
+  const posts = await ctx.db
+    .query("posts")
+    .withIndex("by_knot", (q) => q.eq("knotId", knotId))
+    .collect();
+  for (const p of posts) {
+    const likes = await ctx.db
+      .query("likes")
+      .withIndex("by_post", (q) => q.eq("postId", p._id))
+      .collect();
+    for (const l of likes) await ctx.db.delete(l._id);
+    const comments = await ctx.db
+      .query("comments")
+      .withIndex("by_post", (q) => q.eq("postId", p._id))
+      .collect();
+    for (const c of comments) await ctx.db.delete(c._id);
+    await ctx.db.delete(p._id);
+  }
+  const tugs = await ctx.db.query("tugs").collect();
+  for (const t of tugs) {
+    if (t.knotId === knotId) await ctx.db.delete(t._id);
+  }
+  await ctx.db.delete(knotId);
+}
+
 export const removeKnot = mutation({
   args: { knotId: v.id("knots") },
   handler: async (ctx, args) => {
@@ -259,43 +299,30 @@ export const removeKnot = mutation({
     if (knot.creatorId !== userId) {
       throw new Error("Only the creator can delete this knot.");
     }
-    const members = await ctx.db
+    await destroyKnot(ctx, args.knotId);
+  },
+});
+
+// Dev-only: wipe the caller's knots and mascot so onboarding replays.
+export const resetOnboarding = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireUserId(ctx);
+    const mine = await ctx.db
+      .query("knots")
+      .withIndex("by_creator", (q) => q.eq("creatorId", userId))
+      .collect();
+    for (const knot of mine) await destroyKnot(ctx, knot._id);
+    const leftover = await ctx.db
       .query("knot_members")
-      .withIndex("by_knot", (q) => q.eq("knotId", args.knotId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
-    for (const m of members) await ctx.db.delete(m._id);
-    const messages = await ctx.db
-      .query("messages")
-      .withIndex("by_knot", (q) => q.eq("knotId", args.knotId))
-      .collect();
-    for (const m of messages) await ctx.db.delete(m._id);
-    const checkins = await ctx.db
-      .query("checkins")
-      .withIndex("by_knot", (q) => q.eq("knotId", args.knotId))
-      .collect();
-    for (const c of checkins) await ctx.db.delete(c._id);
-    const posts = await ctx.db
-      .query("posts")
-      .withIndex("by_knot", (q) => q.eq("knotId", args.knotId))
-      .collect();
-    for (const p of posts) {
-      const likes = await ctx.db
-        .query("likes")
-        .withIndex("by_post", (q) => q.eq("postId", p._id))
-        .collect();
-      for (const l of likes) await ctx.db.delete(l._id);
-      const comments = await ctx.db
-        .query("comments")
-        .withIndex("by_post", (q) => q.eq("postId", p._id))
-        .collect();
-      for (const c of comments) await ctx.db.delete(c._id);
-      await ctx.db.delete(p._id);
-    }
-    const tugs = await ctx.db.query("tugs").collect();
-    for (const t of tugs) {
-      if (t.knotId === args.knotId) await ctx.db.delete(t._id);
-    }
-    await ctx.db.delete(args.knotId);
+    for (const m of leftover) await ctx.db.delete(m._id);
+    const self = await ctx.db
+      .query("users")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
+    if (self) await ctx.db.patch(self._id, { mascot: undefined });
   },
 });
 
