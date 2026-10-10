@@ -13,7 +13,6 @@ const clerkConfigured = Boolean(
 
 function CheckIn({ knotId }: { knotId: string }) {
   const checkin = useMutation(api.checkins.checkin);
-  const generateUrl = useMutation(api.checkins.generateUploadUrl);
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -42,27 +41,6 @@ function CheckIn({ knotId }: { knotId: string }) {
     }
   }
 
-  async function sendPhoto(file: File | null) {
-    if (!file) return;
-    setError(null);
-    try {
-      const url = await generateUrl();
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      const { storageId } = (await res.json()) as { storageId: string };
-      await checkin({
-        knotId: knotId as Id<"knots">,
-        kind: "photo",
-        imageStorageId: storageId as Id<"_storage">,
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not check in.");
-    }
-  }
-
   return (
     <div className="border-b border-neutral-800 px-3 py-2">
       <div className="flex gap-2">
@@ -80,15 +58,6 @@ function CheckIn({ knotId }: { knotId: string }) {
             className="w-full rounded-full border border-neutral-800 bg-neutral-950 px-3 py-1.5 text-sm text-white"
           />
         </form>
-        <label className="shrink-0 cursor-pointer rounded-full border border-neutral-700 px-3 py-1.5 text-sm text-white">
-          Photo
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => sendPhoto(e.target.files?.[0] ?? null)}
-          />
-        </label>
       </div>
       {error && <p className="mt-1 text-sm text-neutral-500">{error}</p>}
     </div>
