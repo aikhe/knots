@@ -57,7 +57,9 @@ export function BubsCard() {
     <div className="mt-6 rounded-2xl border border-neutral-800 bg-neutral-950 p-4">
       <div className="flex w-full items-center gap-3">
         <img src="/bub.svg" alt="Bubs" className="h-10 w-10 shrink-0" />
-        <p className="text-sm font-medium text-white">Bubs</p>
+        <p className="text-sm font-medium capitalize text-white">
+          {me?.mascot ?? "Bubs"}
+        </p>
       </div>
       <ul className="mt-3 space-y-2">
         {suggestions.map((s) => (
