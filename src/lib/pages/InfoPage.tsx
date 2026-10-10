@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import { BubsCard } from "../components/Bubs/BubsCard";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -146,6 +147,38 @@ function Notifications() {
   );
 }
 
+function DevReset() {
+  const navigate = useNavigate();
+  const reset = useMutation(api.knots.resetOnboarding);
+  const seed = useMutation(api.seed.seedDemo);
+  const [error, setError] = useState<string | null>(null);
+  if (!import.meta.env.DEV) return null;
+  return (
+    <div className="mt-4">
+      <button
+        onClick={() => reset().then(() => navigate("/welcome"))}
+        className="w-full rounded-full bg-neutral-800 px-4 py-1.5 text-base text-white"
+      >
+        Reset onboarding (dev)
+      </button>
+      <button
+        onClick={() => {
+          setError(null);
+          seed().catch((e) =>
+            setError(e instanceof Error ? e.message : "Could not seed."),
+          );
+        }}
+        className="mt-2 w-full rounded-full bg-neutral-800 px-4 py-1.5 text-base text-white"
+      >
+        Seed demo data (dev)
+      </button>
+      {error && (
+        <p className="mt-1 text-center text-sm text-neutral-500">{error}</p>
+      )}
+    </div>
+  );
+}
+
 export function InfoPage() {
   return (
     <main className="mx-auto max-w-2xl px-3">
@@ -170,6 +203,7 @@ export function InfoPage() {
               <h2 className="text-xl text-white">Notification</h2>
               <Notifications />
             </div>
+            <DevReset />
           </SignedIn>
         </>
       )}
