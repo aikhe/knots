@@ -18,6 +18,7 @@ import type * as messages from "../messages.js";
 import type * as notifications from "../notifications.js";
 import type * as posts from "../posts.js";
 import type * as reminders from "../reminders.js";
+import type * as seed from "../seed.js";
 import type * as tugs from "../tugs.js";
 import type * as users from "../users.js";
 
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   posts: typeof posts;
   reminders: typeof reminders;
+  seed: typeof seed;
   tugs: typeof tugs;
   users: typeof users;
 }>;
