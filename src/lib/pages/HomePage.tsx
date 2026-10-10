@@ -124,10 +124,10 @@ function StartCard() {
   return (
     <Link
       to="/welcome"
-      className="mt-6 block rounded-2xl border border-neutral-800 bg-neutral-950 p-4"
+      className="mt-2 block rounded-2xl bg-neutral-900 p-3"
     >
-      <p className="text-sm font-medium text-white">New here?</p>
-      <p className="mt-1 text-sm text-neutral-400">
+      <p className="text-base text-white">New here?</p>
+      <p className="mt-1 text-sm text-neutral-500">
         Tie your first knot in under a minute.
       </p>
     </Link>
