@@ -3,6 +3,7 @@ import { HomePage } from "./lib/pages/HomePage";
 import { InfoPage } from "./lib/pages/InfoPage";
 import { KnotsPage } from "./lib/pages/KnotsPage";
 import { KnotPage } from "./lib/pages/KnotPage";
+import { EditKnotPage } from "./lib/pages/EditKnotPage";
 import { ErrorPage } from "./lib/pages/ErrorPage";
 import { JoinPage } from "./lib/pages/JoinPage";
 import { ProfilePage } from "./lib/pages/ProfilePage";
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
       { path: "home", element: <HomePage /> },
       { path: "knots", element: <KnotsPage /> },
       { path: "knot/:knotId", element: <KnotPage /> },
+      { path: "knot/:knotId/edit", element: <EditKnotPage /> },
       { path: "join/:token", element: <JoinPage /> },
       { path: "info", element: <InfoPage /> },
       { path: "profile", element: <ProfilePage /> },
