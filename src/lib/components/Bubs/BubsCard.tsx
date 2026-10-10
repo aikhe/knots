@@ -24,7 +24,7 @@ export function BubsCard() {
     recent === undefined ||
     activity === undefined
   ) {
-    return <p className="mt-6 text-sm text-neutral-500">Loading...</p>;
+    return <p className="mt-6 text-center text-sm text-neutral-500">Loading...</p>;
   }
 
   const suggestions = [
@@ -54,17 +54,16 @@ export function BubsCard() {
   ];
 
   return (
-    <div className="mt-6 rounded-2xl border border-neutral-800 bg-neutral-950 p-4">
-      <div className="flex w-full items-center gap-3">
-        <img src="/bub.svg" alt="Bubs" className="h-10 w-10 shrink-0" />
-        <p className="text-sm font-medium text-white">Bubs</p>
+    <div className="mt-2 rounded-2xl bg-neutral-900 p-3">
+      <div className="flex w-full items-center gap-2">
+        <img src="/bub.svg" alt="" className="h-8 w-8 shrink-0" />
       </div>
-      <ul className="mt-3 space-y-2">
+      <ul className="mt-2 space-y-1">
         {suggestions.map((s) => (
           <li key={s.id}>
             <Link
               to={s.to}
-              className="block rounded-xl bg-neutral-900 px-3 py-2 text-sm text-neutral-200"
+              className="block rounded-full bg-neutral-800 px-4 py-2 text-sm text-white"
             >
               {s.text}
             </Link>

@@ -22,18 +22,14 @@ function Requests() {
 
   return (
     <>
-      <h2 className="mt-6 text-center text-sm text-neutral-500">Friend requests</h2>
       <ul className="divide-y divide-neutral-800">
         {incoming.map((r) => (
           <li key={r._id} className="flex items-center gap-2 py-3">
-            <Link
-              to={`/user/${r.username}`}
-              className="text-sm text-white underline"
-            >
+            <Link to={`/user/${r.username}`} className="text-sm text-white">
               {r.displayName}
             </Link>
             <span className="text-sm text-neutral-500">added you</span>
-            <div className="ml-auto flex gap-3">
+            <div className="ml-auto flex gap-2">
               <button
                 onClick={() =>
                   respond({
@@ -41,7 +37,7 @@ function Requests() {
                     accept: true,
                   })
                 }
-                className="text-sm text-white underline"
+                className="rounded-full bg-white px-4 py-1.5 text-sm text-black"
               >
                 Accept
               </button>
@@ -52,7 +48,7 @@ function Requests() {
                     accept: false,
                   })
                 }
-                className="text-sm text-neutral-500 underline"
+                className="rounded-full bg-neutral-800 px-4 py-1.5 text-sm text-white"
               >
                 Decline
               </button>
@@ -72,28 +68,21 @@ function Tugs() {
 
   return (
     <>
-      <h2 className="mt-6 text-center text-sm text-neutral-500">Tugs</h2>
       <ul className="divide-y divide-neutral-800">
         {incoming.map((t) => (
           <li key={t._id} className="flex items-center gap-2 py-3">
-            <Link
-              to={`/user/${t.from}`}
-              className="text-sm text-white underline"
-            >
+            <Link to={`/user/${t.from}`} className="text-sm text-white">
               {t.fromDisplay}
             </Link>
             <span className="text-sm text-neutral-500">
               tugged you in{" "}
             </span>
-            <Link
-              to={`/knot/${t.knotId}`}
-              className="text-sm text-white underline"
-            >
+            <Link to={`/knot/${t.knotId}`} className="text-sm text-white">
               {t.knot}
             </Link>
             <button
               onClick={() => dismiss({ tugId: t._id })}
-              className="ml-auto text-sm text-neutral-500 underline"
+              className="ml-auto rounded-full bg-neutral-800 px-4 py-1.5 text-sm text-white"
             >
               Dismiss
             </button>
@@ -102,11 +91,6 @@ function Tugs() {
       </ul>
     </>
   );
-}
-
-function Empty({ show }: { show: boolean }) {
-  if (!show) return null;
-  return <p className="mt-6 text-center text-sm text-neutral-500">Nothing here yet.</p>;
 }
 
 function Notifications() {
@@ -121,55 +105,51 @@ function Notifications() {
   ) {
     return <p className="mt-6 text-center text-sm text-neutral-500">Loading...</p>;
   }
+  const unread = notes.filter((n) => !n.read);
+  const hasAny =
+    requests.length > 0 || tugs.length > 0 || unread.length > 0;
   return (
-    <>
-      <Requests />
-      <Tugs />
-      {(notes.filter((n) => !n.read) ?? []).length > 0 && (
+    <div className="mt-2 rounded-2xl bg-neutral-900 p-3">
+      {!hasAny ? (
+        <p className="py-3 text-center text-sm text-neutral-500">
+          Nothing here yet.
+        </p>
+      ) : (
         <>
-          <h2 className="mt-6 text-center text-sm text-neutral-500">Reminders</h2>
-          <ul className="divide-y divide-neutral-800">
-            {notes
-              .filter((n) => !n.read)
-              .map((n) => (
+          <Requests />
+          <Tugs />
+          {unread.length > 0 && (
+            <ul className="divide-y divide-neutral-800">
+              {unread.map((n) => (
                 <li key={n._id} className="flex items-center gap-2 py-3">
                   <p className="text-sm text-neutral-300">
                     {n.text}{" "}
                     {n.knot && n.knotId && (
-                      <Link
-                        to={`/knot/${n.knotId}`}
-                        className="text-white underline"
-                      >
+                      <Link to={`/knot/${n.knotId}`} className="text-white">
                         {n.knot}
                       </Link>
                     )}
                   </p>
                   <button
                     onClick={() => markRead({ notificationId: n._id })}
-                    className="ml-auto shrink-0 text-sm text-neutral-500 underline"
+                    className="ml-auto shrink-0 rounded-full bg-neutral-800 px-4 py-1.5 text-sm text-white"
                   >
                     Done
                   </button>
                 </li>
               ))}
-          </ul>
+            </ul>
+          )}
         </>
       )}
-      <Empty
-        show={
-          requests.length === 0 &&
-          tugs.length === 0 &&
-          notes.filter((n) => !n.read).length === 0
-        }
-      />
-    </>
+    </div>
   );
 }
 
 export function InfoPage() {
   return (
-    <main className="mx-auto max-w-2xl px-3 py-6">
-      <h1 className="text-xl font-medium text-white">Info</h1>
+    <main className="mx-auto max-w-2xl px-3">
+      <h2 className="text-xl text-white">Bub's insight</h2>
       <BubsCard />
       {!clerkConfigured ? (
         <p className="mt-6 text-center text-sm text-neutral-500">
@@ -186,7 +166,10 @@ export function InfoPage() {
             </Link>
           </SignedOut>
           <SignedIn>
-            <Notifications />
+            <div className="mt-4">
+              <h2 className="text-xl text-white">Notification</h2>
+              <Notifications />
+            </div>
           </SignedIn>
         </>
       )}
