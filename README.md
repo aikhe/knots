@@ -1,72 +1,45 @@
 <img alt="knots banner v1" src="https://github.com/user-attachments/assets/aa4b32bd-c74d-4b2b-a45f-fb065f67b59d" />
 
-# test-stack
+# knots
 
-Vite + React + Tailwind + Convex starter on Bun.
+Bun + Turborepo monorepo: a Vite + React app with per-user data on Convex.
 
 ## Stack
 
-- Bun (runtime + package manager)
-- React 19 + TypeScript + Vite 8
-- Tailwind CSS v4
-- Convex backend (local-first dev via `bunx convex dev`)
+- Bun (runtime, package manager, workspaces) + Turborepo (task runner)
+- React 19 + TypeScript + Vite 8, Tailwind CSS v4 (`apps/web`)
+- Convex backend (`packages/backend`)
 - Clerk auth (`VITE_CLERK_PUBLISHABLE_KEY` + a `convex` JWT template)
-- Zustand (UI state, `src/store.ts`), TanStack Query (non-Convex data,
-  `src/lib/utils/queryClient.ts`), ArkType (validation,
-  `src/lib/utils/validators.ts`)
+- Zustand (UI state), TanStack Query (non-Convex data), oxlint
 
 ## Structure
 
-- `convex/` — backend: `schema.ts` (users, knots, members, posts),
-  `users.ts`, `knots.ts`, `posts.ts`, `auth.config.ts`
-  (`_generated/` is produced by `convex dev`, committed)
-- `src/` — `main.tsx` (entry), `router.tsx` (MobileScreen layout,
-  `/home`, `/knots`, `/info`, `/profile`, `/user/:username`, `/signin`,
-  catch-all),
-  `store.ts`,
-  `lib/components/` (feature folders: `Posts/`, `TopBar/`, `BottomNav/`,
-  `SideDrawer/`, `Composer/`),
-  `lib/layouts/` (`Backend.tsx`, Convex/Clerk providers, `MobileScreen/`
-  phone-width frame), `lib/pages/` (`SignInPage.tsx`, lazy-loaded),
-  `lib/utils/` (`queryClient.ts`, `validators.ts`),
-  `lib/assets/` (images), `styles/` (`main.css` Tailwind entry,
-  `tokens.css` true-black dark base)
-- `public/` — static assets
+- `apps/web` (`@knots/web`) — Vite + React app
+- `packages/backend` (`@knots/backend`) — Convex functions, schema, and generated API
+- `packages/typescript-config` (`@knots/typescript-config`) — shared `base.json` and `react.json`
+- `turbo.json`, `.oxlintrc.json` — task graph and the single oxlint config for all workspaces
+- `docs/` — project notes
 
 ## Envs
 
-Copy `.env.example` to `.env.local` (gitignored). `bunx convex dev`
-writes the Convex rows for you.
+- `apps/web/.env.local` (copy `apps/web/.env.example`):
+  - `VITE_CONVEX_URL` — backend client URL for the deployment `convex dev` uses.
+  - `VITE_CLERK_PUBLISHABLE_KEY` — Clerk key.
+- `packages/backend/.env.local`:
+  - `CONVEX_DEPLOYMENT` — which deployment `convex dev` syncs to. Written by `convex dev`.
+- Convex deployment env var (not a file): `CLERK_JWT_ISSUER_DOMAIN`, set from `packages/backend` with `bunx convex env set CLERK_JWT_ISSUER_DOMAIN <url>`. Read by `packages/backend/convex/auth.config.ts`. Needs a `convex` JWT template in Clerk.
 
-- `VITE_CONVEX_URL` — backend client URL. Required for data; app renders a
-  setup hint without it.
-- `VITE_CONVEX_SITE_URL` — HTTP actions URL. Written by `convex dev`,
-  unused by the app so far.
-- `CONVEX_DEPLOYMENT` — which deployment `convex dev` syncs to. Backend-only,
-  never shipped to the browser.
-- `VITE_CLERK_PUBLISHABLE_KEY` — Clerk key. Auth UI stays off without it.
-- `CLERK_JWT_ISSUER_DOMAIN` — backend-side; must be visible to the
-  `bunx convex dev` process for Clerk JWTs to verify (see
-  `convex/auth.config.ts`). Needs a `convex` JWT template in Clerk.
-
-Only `VITE_*` vars reach the browser.
+Only `VITE_*` vars reach the browser. Never put secrets behind `VITE_`.
 
 ## Dev
 
-- `bun install`
-- `bunx convex dev` (terminal 1, keeps backend in sync, writes
-  `VITE_CONVEX_URL` to `.env.local`)
-- `bun run dev` (terminal 2, opens the Vite dev server with HMR)
-- `bun run lint`, `bun run build` to verify
+- `bun install` at the root
+- First time only: `cd packages/backend && bunx convex dev` to pick or create a deployment
+- `bun run dev` at the root runs Convex and Vite together via Turborepo
+- `bun run check && bun run build` to verify (lint, type check, build)
 
 ## Prod
 
-- `bun run build` — typechecks and emits the static bundle to `dist/`.
-- `bun run preview` — serves `dist/` locally to sanity-check the prod build.
-- Frontend: deploy `dist/` to any static host. Set `VITE_CONVEX_URL` (and
-  `VITE_CLERK_PUBLISHABLE_KEY` if using auth) in the host's env settings,
-  then rebuild — Vite bakes `VITE_*` vars in at build time.
-- Backend: `bunx convex deploy` pushes `convex/` to the production
-  deployment. Point the frontend's `VITE_CONVEX_URL` at that deployment.
-
-Repo: `github.com/aikhe/test-stack`, branch `main`.
+- `bun run build` emits the static bundle to `apps/web/dist`.
+- Frontend: deploy `apps/web/dist` to any static host. Set `VITE_CONVEX_URL` and `VITE_CLERK_PUBLISHABLE_KEY` in the host's env settings, then rebuild. Vite bakes `VITE_*` vars in at build time.
+- Backend: from `packages/backend`, `bunx convex deploy` pushes `convex/` to the production deployment. Point the frontend's `VITE_CONVEX_URL` at that deployment.
