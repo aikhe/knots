@@ -78,8 +78,8 @@ export function BottomNav() {
   const location = useLocation();
 
   return (
-    <nav className="bg-transparent px-2 pt-2 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-      <div className="flex items-center justify-center gap-2">
+    <nav className="pointer-events-none bg-transparent px-2 pt-2 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <div className="pointer-events-auto flex items-center justify-center gap-2">
         <ul className="flex items-center justify-center rounded-full bg-neutral-800">
           {tabs.map((tab) => (
             <li key={tab.to}>

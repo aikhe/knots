@@ -250,7 +250,10 @@ export const removeMember = mutation({
   },
 });
 
-async function destroyKnot(ctx: MutationCtx, knotId: Id<"knots">) {
+export async function destroyKnot(
+  ctx: MutationCtx,
+  knotId: Id<"knots">,
+) {
   const members = await ctx.db
     .query("knot_members")
     .withIndex("by_knot", (q) => q.eq("knotId", knotId))
@@ -428,6 +431,11 @@ export const get = query({
         .filter((r) => !r.resting)
         .map((r) => memberScore(r.lastCheckinAt, knot._creationTime, now)),
     );
+    const lastTugRow = await ctx.db
+      .query("tugs")
+      .withIndex("by_knot", (q) => q.eq("knotId", args.knotId))
+      .order("desc")
+      .first();
     return {
       _id: knot._id,
       _creationTime: knot._creationTime,
@@ -442,6 +450,12 @@ export const get = query({
       inviteToken: member ? (knot.inviteToken ?? null) : null,
       members,
       posts,
+      lastTug: lastTugRow
+        ? {
+            fromDisplay: await displayNameOf(ctx, lastTugRow.fromUserId),
+            at: lastTugRow._creationTime,
+          }
+        : null,
     };
   },
 });

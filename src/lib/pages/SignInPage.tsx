@@ -1,14 +1,18 @@
 import { SignIn, SignedIn, SignedOut } from "@clerk/clerk-react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
+import { safeRedirect } from "../utils/redirect";
 
 const clerkConfigured = Boolean(
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
 );
 
 export function SignInPage() {
+  const [params] = useSearchParams();
+  const redirect = safeRedirect(params.get("redirect"));
+
   return (
     <main className="mx-auto max-w-2xl px-3 py-10">
-      <Link to="/home" className="text-xl font-medium text-white">
+      <Link to="/welcome" className="text-xl font-medium text-white">
         knots
       </Link>
       {!clerkConfigured ? (
@@ -21,7 +25,8 @@ export function SignInPage() {
             <SignIn
               routing="path"
               path="/signin"
-              fallbackRedirectUrl="/home"
+              fallbackRedirectUrl={redirect ?? "/home"}
+              signUpFallbackRedirectUrl={redirect ?? "/welcome"}
               appearance={{
                 variables: {
                   colorBackground: "#000",
@@ -51,14 +56,16 @@ export function SignInPage() {
           </div>
         </SignedOut>
       )}
-      <SignedIn>
-        <p className="mt-6 text-sm text-neutral-400">
-          Already signed in.{" "}
-          <Link to="/home" className="text-white underline">
-            Back to home
-          </Link>
-        </p>
-      </SignedIn>
+      {clerkConfigured && (
+        <SignedIn>
+          <p className="mt-6 text-sm text-neutral-400">
+            Already signed in.{" "}
+            <Link to="/home" className="text-white underline">
+              Back to home
+            </Link>
+          </p>
+        </SignedIn>
+      )}
     </main>
   );
 }

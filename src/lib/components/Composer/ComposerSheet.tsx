@@ -420,7 +420,7 @@ export function ComposerSheet() {
           onDragEnd={(_, info) => {
             if (info.offset.y > 100 || info.velocity.y > 500) close();
           }}
-          className="absolute inset-x-0 bottom-0 z-20 flex h-[60%] flex-col rounded-t-3xl bg-[#101010]"
+          className="absolute inset-x-0 bottom-0 z-20 flex h-[60%] flex-col rounded-t-3xl bg-surface"
         >
           <div
             onPointerDown={(e) => dragControls.start(e)}

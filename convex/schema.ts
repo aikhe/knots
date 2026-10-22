@@ -93,7 +93,9 @@ export default defineSchema({
     knotId: v.id("knots"),
     fromUserId: v.string(),
     toUserId: v.string(),
-  }).index("by_to", ["toUserId"]),
+  })
+    .index("by_to", ["toUserId"])
+    .index("by_knot", ["knotId"]),
 
   friend_requests: defineTable({
     fromUserId: v.string(),

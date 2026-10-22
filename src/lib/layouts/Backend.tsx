@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ClerkProvider, useAuth } from "@clerk/clerk-react";
+import { EnsureUser } from "./EnsureUser";
+import { DevDock } from "../components/Dev/DevDock";
 
 const convexUrl = import.meta.env.VITE_CONVEX_URL as string | undefined;
 const clerkKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as
@@ -19,7 +21,9 @@ export function Backend({ children }: { children: ReactNode }) {
     return (
       <ClerkProvider publishableKey={clerkKey}>
         <ConvexProviderWithClerk client={convexClient} useAuth={useAuth}>
+          <EnsureUser />
           {children}
+          {import.meta.env.DEV && <DevDock />}
         </ConvexProviderWithClerk>
       </ClerkProvider>
     );

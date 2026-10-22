@@ -13,34 +13,35 @@ import { EditProfilePage } from "./lib/pages/EditProfilePage";
 import { PostPage } from "./lib/pages/PostPage";
 import { EditPostPage } from "./lib/pages/EditPostPage";
 import { UserPage } from "./lib/pages/UserPage";
+import { SystemPage } from "./lib/pages/SystemPage";
 import { MobileScreen, BareScreen } from "./lib/layouts/MobileScreen/MobileScreen";
+import { RequireAuth } from "./lib/layouts/RequireAuth";
 
 export const router = createBrowserRouter([
+  { path: "/", element: <Navigate to="/welcome" replace /> },
   {
-    element: <MobileScreen />,
+    element: <RequireAuth />,
     errorElement: <ErrorPage />,
     children: [
-      { index: true, element: <Navigate to="/home" replace /> },
-      { path: "home", element: <HomePage /> },
-      { path: "knots", element: <KnotsPage /> },
-      { path: "knot/:knotId", element: <KnotPage /> },
-      { path: "knot/:knotId/edit", element: <EditKnotPage /> },
-      { path: "join/:token", element: <JoinPage /> },
-      { path: "info", element: <InfoPage /> },
-      { path: "profile", element: <ProfilePage /> },
-      { path: "profile/friends", element: <FriendsPage /> },
-      { path: "profile/edit", element: <EditProfilePage /> },
-      { path: "post/:postId", element: <PostPage /> },
-      { path: "post/:postId/edit", element: <EditPostPage /> },
-      { path: "user/:username", element: <UserPage /> },
       {
-        path: "signin/*",
-        lazy: () =>
-          import("./lib/pages/SignInPage").then((m) => ({
-            Component: m.SignInPage,
-          })),
+        element: <MobileScreen />,
+        children: [
+          { path: "home", element: <HomePage /> },
+          { path: "knots", element: <KnotsPage /> },
+          { path: "knot/:knotId", element: <KnotPage /> },
+          { path: "knot/:knotId/edit", element: <EditKnotPage /> },
+          { path: "join/:token", element: <JoinPage /> },
+          { path: "info", element: <InfoPage /> },
+          { path: "profile", element: <ProfilePage /> },
+          { path: "profile/friends", element: <FriendsPage /> },
+          { path: "profile/edit", element: <EditProfilePage /> },
+          { path: "post/:postId", element: <PostPage /> },
+          { path: "post/:postId/edit", element: <EditPostPage /> },
+          { path: "user/:username", element: <UserPage /> },
+          { path: "system", element: <SystemPage /> },
+          { path: "*", element: <Navigate to="/home" replace /> },
+        ],
       },
-      { path: "*", element: <Navigate to="/home" replace /> },
     ],
   },
   {
@@ -49,6 +50,16 @@ export const router = createBrowserRouter([
         <Outlet />
       </BareScreen>
     ),
-    children: [{ path: "welcome", element: <OnboardingPage /> }],
+    errorElement: <ErrorPage />,
+    children: [
+      { path: "welcome", element: <OnboardingPage /> },
+      {
+        path: "signin/*",
+        lazy: () =>
+          import("./lib/pages/SignInPage").then((m) => ({
+            Component: m.SignInPage,
+          })),
+      },
+    ],
   },
 ]);

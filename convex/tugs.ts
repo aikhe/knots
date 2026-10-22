@@ -2,26 +2,39 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { callerUserId, requireUserId, usernameOf, displayNameOf } from "./users";
 
-export const send = mutation({
-  args: { knotId: v.id("knots"), toUserId: v.string() },
+export const tugKnot = mutation({
+  args: { knotId: v.id("knots") },
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
-    if (args.toUserId === userId) throw new Error("That is you.");
     const knot = await ctx.db.get(args.knotId);
     if (!knot) throw new Error("Knot not found.");
     const rows = await ctx.db
       .query("knot_members")
       .withIndex("by_knot", (q) => q.eq("knotId", args.knotId))
       .collect();
-    const ids = new Set(rows.map((r) => r.userId));
-    if (!ids.has(userId) || !ids.has(args.toUserId)) {
-      throw new Error("Both of you must be in the knot.");
+    if (!rows.some((r) => r.userId === userId)) {
+      throw new Error("Join the knot first.");
     }
-    await ctx.db.insert("tugs", {
-      knotId: args.knotId,
-      fromUserId: userId,
-      toUserId: args.toUserId,
-    });
+    const outstanding = await ctx.db
+      .query("tugs")
+      .withIndex("by_knot", (q) => q.eq("knotId", args.knotId))
+      .collect();
+    const already = new Set(
+      outstanding
+        .filter((t) => t.fromUserId === userId)
+        .map((t) => t.toUserId),
+    );
+    let n = 0;
+    for (const row of rows) {
+      if (row.userId === userId || already.has(row.userId)) continue;
+      await ctx.db.insert("tugs", {
+        knotId: args.knotId,
+        fromUserId: userId,
+        toUserId: row.userId,
+      });
+      n++;
+    }
+    return n;
   },
 });
 

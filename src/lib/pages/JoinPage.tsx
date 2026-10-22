@@ -72,7 +72,7 @@ export function JoinPage() {
         <>
           <SignedOut>
             <Link
-              to="/signin"
+              to={`/signin?redirect=${encodeURIComponent(`/join/${token}`)}`}
               className="mt-6 inline-block text-sm text-white underline"
             >
               Sign in

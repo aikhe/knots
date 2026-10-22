@@ -14,13 +14,15 @@ const clerkConfigured = Boolean(
 function CheckIn({
   knotId,
   resting,
-  tuggable,
-  onTug,
+  canTug,
+  lastTug,
+  onTugKnot,
 }: {
   knotId: string;
   resting: boolean;
-  tuggable: { userId: string; displayName: string }[];
-  onTug: (userId: string) => void;
+  canTug: boolean;
+  lastTug: { fromDisplay: string; at: number } | null;
+  onTugKnot: () => Promise<void>;
 }) {
   const checkin = useMutation(api.checkins.checkin);
   const setRest = useMutation(api.knots.setRest);
@@ -35,6 +37,15 @@ function CheckIn({
     }
   }
 
+  async function tug() {
+    setError(null);
+    try {
+      await onTugKnot();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not tug the knot.");
+    }
+  }
+
   return (
     <div className="px-3 py-2">
       <div className="flex items-center gap-2">
@@ -44,16 +55,15 @@ function CheckIn({
         >
           Check in
         </button>
-        {tuggable.map((t) => (
+        {canTug && (
           <button
-            key={t.userId}
-            onClick={() => onTug(t.userId)}
-            aria-label={`Tug ${t.displayName}`}
+            onClick={tug}
+            aria-label="Tug the whole knot"
             className="flex-1 rounded-full bg-neutral-800 px-4 py-2 text-center text-sm text-white"
           >
-            tug
+            Tug knot
           </button>
-        ))}
+        )}
         <button
           onClick={() => setRest({ knotId: knotId as Id<"knots">, resting: !resting })}
           className="flex-1 rounded-full bg-neutral-800 px-4 py-2 text-center text-sm text-white"
@@ -61,6 +71,11 @@ function CheckIn({
           {resting ? "Resume" : "Rest"}
         </button>
       </div>
+      {lastTug && (
+        <p className="mt-1 text-center text-xs text-neutral-500">
+          {lastTug.fromDisplay} tugged the knot · {timeAgo(lastTug.at)}
+        </p>
+      )}
       {error && (
         <p className="mt-1 text-center text-sm text-neutral-500">{error}</p>
       )}
@@ -86,7 +101,7 @@ function Chat({
   });
   const sendMessage = useMutation(api.messages.send);
   const joinKnot = useMutation(api.knots.join);
-  const sendTug = useMutation(api.tugs.send);
+  const tugKnot = useMutation(api.tugs.tugKnot);
   const [text, setText] = useState("");
   const [copied, setCopied] = useState(false);
   const removeMember = useMutation(api.knots.removeMember);
@@ -175,7 +190,7 @@ function Chat({
         )}
         {knot.isMember && !knot.resting && knot.rope === "slack" && (
           <p className="mt-2 rounded-2xl bg-neutral-900 px-3 py-2 text-center text-sm text-neutral-300">
-            Stuck? Rest it for a breather, tug a member, or trim the goal.
+            Stuck? Rest it for a breather, tug the knot, or trim the goal.
           </p>
         )}
         <div className="mt-3 flex items-center justify-center">
@@ -301,10 +316,11 @@ function Chat({
           <CheckIn
             knotId={knotId}
             resting={knot.resting}
-            tuggable={knot.members
-              .filter((m) => m.userId !== myId)
-              .map((m) => ({ userId: m.userId, displayName: m.displayName }))}
-            onTug={(userId) => sendTug({ knotId: knot._id, toUserId: userId })}
+            canTug={knot.members.some((m) => m.userId !== myId)}
+            lastTug={knot.lastTug}
+            onTugKnot={async () => {
+              await tugKnot({ knotId: knot._id });
+            }}
           />
           <form
             onSubmit={onSend}

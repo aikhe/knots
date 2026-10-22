@@ -1,10 +1,15 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { RopeMeter } from "../components/Knots/RopeMeter";
+import { safeRedirect } from "../utils/redirect";
+
+const clerkConfigured = Boolean(
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
+);
 
 const PICKS = [
   { id: "fitness", label: "Fitness", shrunk: "walk 20 minutes, 3 times a week" },
@@ -15,7 +20,7 @@ const PICKS = [
   { id: "custom", label: "Custom", shrunk: "" },
 ];
 
-function Meet({ onNext }: { onNext: () => void }) {
+function Meet() {
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex flex-1 flex-col items-center justify-center text-center">
@@ -24,12 +29,12 @@ function Meet({ onNext }: { onNext: () => void }) {
           Stop sending TikToks. Start doing things.
         </p>
       </div>
-      <button
-        onClick={onNext}
-        className="mt-auto w-full rounded-full bg-white px-3 py-2 text-base text-black"
+      <Link
+        to="/signin"
+        className="mt-auto block w-full rounded-full bg-white px-3 py-2 text-center text-base text-black"
       >
         Get started
-      </button>
+      </Link>
     </div>
   );
 }
@@ -83,7 +88,7 @@ function Pick({
         disabled={!shrunk}
         className="mt-auto w-full rounded-full bg-white px-3 py-2 text-base text-black disabled:opacity-40"
       >
-        Tie it
+        Continue
       </button>
     </div>
   );
@@ -198,9 +203,13 @@ function Share({
   });
   const [shared, setShared] = useState(false);
   const bub = "/bubs/Group%2067.svg";
-  const message = `I tied a knot with you. Tie yours? ${window.location.origin}/join/${knot?.inviteToken ?? ""}`;
+  const token = knot?.inviteToken ?? null;
+  const message = token
+    ? `I tied a knot with you. Tie yours? ${window.location.origin}/join/${token}`
+    : null;
 
   async function share() {
+    if (!message) return;
     try {
       if (navigator.share) {
         await navigator.share({ text: message });
@@ -218,12 +227,15 @@ function Share({
     <div className="mt-8 flex flex-1 flex-col">
       <img src={bub} alt="" className="h-24 w-auto self-start" />
       <h1 className="mt-4 text-2xl text-white">Tied: {title}</h1>
-      <p className="mt-2 rounded-2xl bg-neutral-900 px-3 py-2 text-base text-neutral-200">
-        {message}
-      </p>
+      {message && (
+        <p className="mt-2 rounded-2xl bg-neutral-900 px-3 py-2 text-base text-neutral-200">
+          {message}
+        </p>
+      )}
       <button
         onClick={share}
-        className="mt-auto w-full rounded-full bg-white px-3 py-2 text-base text-black"
+        disabled={!message}
+        className="mt-auto w-full rounded-full bg-white px-3 py-2 text-base text-black disabled:opacity-40"
       >
         {shared ? "Shared" : "Share invite"}
       </button>
@@ -329,14 +341,18 @@ const MASCOTS = [
 ];
 
 function PickBub({ onDone }: { onDone: () => void }) {
-  const navigate = useNavigate();
   const setMascot = useMutation(api.users.setMascot);
   const [name, setName] = useState("bubs");
+  const [error, setError] = useState<string | null>(null);
 
   async function save() {
-    await setMascot({ mascot: name }).catch(() => {});
-    onDone();
-    navigate("/home");
+    setError(null);
+    try {
+      await setMascot({ mascot: name });
+      onDone();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save.");
+    }
   }
 
   return (
@@ -364,52 +380,67 @@ function PickBub({ onDone }: { onDone: () => void }) {
       >
         Enter Knots
       </button>
+      {error && <p className="mt-2 text-sm text-neutral-500">{error}</p>}
     </div>
   );
 }
 
 function Flow() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const redirect = safeRedirect(params.get("redirect"));
+  const destination = redirect ?? "/home";
   const knots = useQuery(api.knots.mine);
-  const [step, setStep] = useState(0);
-  const [pick, setPick] = useState("fitness");
+  const me = useQuery(api.users.me);
+  // The welcome screen runs before sign-in, so the signed-in flow starts
+  // at the first real step instead of repeating the pitch.
+  const [step, setStep] = useState(1);
+  const [pick, setPick] = useState("");
   const [custom, setCustom] = useState("");
   const [knotId, setKnotId] = useState<string | null>(null);
   const [withFriend, setWithFriend] = useState(false);
 
-  if (step === 0 && knots !== undefined && knots.length > 0) {
-    return <Navigate to="/home" replace />;
+  if (step === 1) {
+    if (me === undefined || me === null || knots === undefined) return null;
+    // Finished onboarding, or already tied something: nothing left to do here.
+    const done =
+      knotId === null && (Boolean(me.mascot) || knots.length > 0);
+    if (done) return <Navigate to={destination} replace />;
   }
 
   const chosen = PICKS.find((p) => p.id === pick);
   const title =
     pick === "custom" ? custom.trim() : (chosen?.shrunk ?? "");
+  // Solo runs skip the share step, so the bar has one fewer segment.
+  const order = withFriend ? [1, 2, 3, 4, 5, 6] : [1, 2, 3, 5, 6];
+  const position = order.indexOf(step);
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-3 pb-6 pt-6 sm:min-h-0 sm:h-full">
       <div className="flex items-center gap-1">
-        <button
-          onClick={() => (step === 0 ? navigate("/home") : setStep(step - 1))}
-          aria-label="Back"
-          className="text-neutral-500 hover:text-white"
-        >
-          <img
-            src="/MajesticonsChevronLeft.svg"
-            alt=""
-            className="h-6 w-6 invert"
-          />
-        </button>
+        {step > 1 && (
+          <button
+            onClick={() => setStep(step - 1)}
+            aria-label="Back"
+            className="text-neutral-500 hover:text-white"
+          >
+            <img
+              src="/MajesticonsChevronLeft.svg"
+              alt=""
+              className="h-6 w-6 invert"
+            />
+          </button>
+        )}
         <div className="flex flex-1 gap-1 px-2">
-          {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+          {order.map((i, index) => (
             <div
               key={i}
-              className={`h-2 flex-1 rounded-full ${i <= step ? "bg-white" : "bg-neutral-800"}`}
+              className={`h-2 flex-1 rounded-full ${index <= position ? "bg-white" : "bg-neutral-800"}`}
             />
           ))}
         </div>
       </div>
       <div className="flex min-h-0 flex-1 flex-col">
-      {step === 0 && <Meet onNext={() => setStep(1)} />}
       {step === 1 && (
         <Pick
           pick={pick}
@@ -439,25 +470,29 @@ function Flow() {
         <FirstCheckin knotId={knotId ?? ""} onNext={() => setStep(5)} />
       )}
       {step === 5 && <NotifySample onDone={() => setStep(6)} />}
-      {step === 6 && <PickBub onDone={() => navigate("/home")} />}
+      {step === 6 && (
+        <PickBub onDone={() => navigate(destination, { replace: true })} />
+      )}
       </div>
     </main>
   );
 }
 
+function SignedOutWelcome() {
+  return (
+    <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-3 pb-6 pt-6 sm:min-h-0 sm:h-full">
+      <Meet />
+    </main>
+  );
+}
+
 export function OnboardingPage() {
+  if (!clerkConfigured) return <SignedOutWelcome />;
+
   return (
     <>
       <SignedOut>
-        <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-3 pb-6 pt-6 sm:min-h-0 sm:h-full">
-          <Meet onNext={() => {}} />
-          <Link
-            to="/signin"
-            className="mt-4 block rounded-full bg-white px-3 py-1.5 text-center text-base text-black"
-          >
-            Sign in to continue
-          </Link>
-        </main>
+        <SignedOutWelcome />
       </SignedOut>
       <SignedIn>
         <Flow />

@@ -4,6 +4,7 @@
 @theme {
   --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
+  --color-surface: #101010;
 }
 
 html,

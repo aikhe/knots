@@ -11,6 +11,7 @@
 import type * as checkins from "../checkins.js";
 import type * as comments from "../comments.js";
 import type * as crons from "../crons.js";
+import type * as dev from "../dev.js";
 import type * as friends from "../friends.js";
 import type * as knotScore from "../knotScore.js";
 import type * as knots from "../knots.js";
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   checkins: typeof checkins;
   comments: typeof comments;
   crons: typeof crons;
+  dev: typeof dev;
   friends: typeof friends;
   knotScore: typeof knotScore;
   knots: typeof knots;

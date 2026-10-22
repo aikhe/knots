@@ -21,7 +21,7 @@ export function SideDrawer({
       animate={{ scale: open ? 1 : 0.97, opacity: open ? 1 : 0.8 }}
       transition={{ type: "tween", duration: 0.25, ease: "easeOut" }}
       style={{ transformOrigin: "left center" }}
-      className="absolute inset-y-0 left-0 flex w-[260px] flex-col border-r border-neutral-800 bg-[#101010]"
+      className="absolute inset-y-0 left-0 flex w-[260px] flex-col border-r border-neutral-800 bg-surface"
     >
       <div className="px-3 py-3">
         <Link
@@ -47,6 +47,19 @@ export function SideDrawer({
           </li>
         ))}
       </ul>
+      {import.meta.env.DEV && (
+        <div className="mt-auto border-t border-neutral-800 px-3 py-3">
+          <NavLink
+            to="/system"
+            onClick={onClose}
+            className={({ isActive }) =>
+              `text-xs ${isActive ? "text-white" : "text-neutral-600"}`
+            }
+          >
+            System
+          </NavLink>
+        </div>
+      )}
     </motion.nav>
   );
 }

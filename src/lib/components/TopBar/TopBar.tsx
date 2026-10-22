@@ -11,7 +11,7 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
   const streak = useTopBarStreak();
 
   return (
-    <header className="bg-[#101010]">
+    <header className="bg-surface">
       <div className="flex items-center justify-between px-4 pb-4 pt-6">
         {variant === "profile" ? (
           <button aria-label="Streak" className="flex items-center gap-1 text-neutral-300 hover:text-white">

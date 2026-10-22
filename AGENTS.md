@@ -51,3 +51,18 @@ Vite + React + Tailwind base with per-user data. Stack: Bun, React 19 + TypeScri
 | `commit`   | Staging + committing             |
 | `pr`       | PRs with structured descriptions |
 | `grill-me` | Stress-testing a plan or design  |
+
+Design engineering pack (upstream: `emilkowalski/skill`, verbatim copies):
+
+| Skill                                              | Use when                                     |
+| -------------------------------------------------- | -------------------------------------------- |
+| `emil-design-eng`                                  | UI polish, component design, motion judgment |
+| `animate`                                          | Building motion from scratch                 |
+| `review-animations` / `animation-performance`       | Strict motion critique, frame-budget bugs    |
+| `improve-animations` / `find-animation-opportunities` | Codebase motion audit, where motion belongs  |
+| `mobile-native`                                    | Phone-feel fixes: taps, 100vh, safe areas    |
+| `break-ui`                                         | Worst-case data stress tests                 |
+| `ask-sonner` / `pick-ui-library` / `prototype`     | Toasts, library choice, comparing variants   |
+| `apple-design` / `animation-vocabulary`            | Gesture/spring theory, naming an effect      |
+
+`review-animations`, `prototype`, and `pick-ui-library` set `disable-model-invocation`, so ask for them by name.
