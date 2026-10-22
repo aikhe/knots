@@ -1,0 +1,11 @@
+{
+  "extends": "@knots/typescript-config/base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM"],
+    "types": ["node"],
+    "allowJs": true,
+    "allowImportingTsExtensions": false
+  },
+  "include": ["./**/*"],
+  "exclude": ["./_generated"]
+}

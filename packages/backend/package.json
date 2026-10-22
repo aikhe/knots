@@ -1,0 +1,29 @@
+{
+  "name": "@knots/backend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./api": {
+      "types": "./convex/_generated/api.d.ts",
+      "default": "./convex/_generated/api.js"
+    },
+    "./dataModel": {
+      "types": "./convex/_generated/dataModel.d.ts"
+    }
+  },
+  "scripts": {
+    "dev": "bunx convex dev",
+    "check-types": "tsc -p convex",
+    "lint": "oxlint"
+  },
+  "dependencies": {
+    "convex": "^1.46.0"
+  },
+  "devDependencies": {
+    "@knots/typescript-config": "workspace:*",
+    "@types/node": "^24.13.3",
+    "oxlint": "^1.81.0",
+    "typescript": "~6.0.2"
+  }
+}
